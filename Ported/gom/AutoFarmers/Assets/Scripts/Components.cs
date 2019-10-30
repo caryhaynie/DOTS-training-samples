@@ -16,3 +16,6 @@ public struct MapData : IComponentData
     public int Width;
     public int Height;
 }
+
+public struct HarvestablePlant : IComponentData {}
+public struct Rock : IComponentData {}
