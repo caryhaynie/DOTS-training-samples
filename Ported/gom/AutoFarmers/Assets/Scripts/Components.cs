@@ -41,3 +41,18 @@ public struct LandState : IComponentData
 }
 
 public struct SmashRockIntention : IComponentData {}
+public struct TillGroundIntention : IComponentData { }
+public struct PlantSeedIntention : IComponentData { }
+public struct HarvestPlantIntention : IComponentData { }
+public struct SellPlantIntention : IComponentData { }
+
+public struct NeedGoal : IComponentData { }
+public struct NeedPath : IComponentData { }
+
+//public struct HoldingPlant : IComponentData { }
+
+public struct Plant : IComponentData 
+{
+}
+
+
