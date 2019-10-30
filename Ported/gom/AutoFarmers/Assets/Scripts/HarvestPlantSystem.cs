@@ -8,7 +8,6 @@ using static Unity.Mathematics.math;
 
 public class HarvestPlantSystem : JobComponentSystem
 {
-
     EndSimulationEntityCommandBufferSystem m_EntityCommandBufferSystem;
 
     protected override void OnCreate()
@@ -16,19 +15,15 @@ public class HarvestPlantSystem : JobComponentSystem
         m_EntityCommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
     }
 
-
     [BurstCompile]
     [ExcludeComponent(typeof(PathIndex))]
-    struct HarvestPlantSystemJob : IJobForEachWithEntity<HarvestPlantIntention, TargetEntity>
+    [RequireComponentTag(typeof(HarvestPlantIntention))]
+    struct HarvestPlantSystemJob : IJobForEachWithEntity<TargetEntity>
     {
-        // Add fields here that your job needs to do its work.
-        // For example,
-        //    public float deltaTime;
-        
-        
-        
+        public EntityCommandBuffer.Concurrent EntityCommandBuffer;
+
         public void Execute(Entity entity,
-            int index, 
+            int index,
             ref TargetEntity target)
         {
 
@@ -36,24 +31,22 @@ public class HarvestPlantSystem : JobComponentSystem
             EntityCommandBuffer.AddComponent<NeedPath>(index, entity);
             EntityCommandBuffer.RemoveComponent<HarvestPlantIntention>(index, entity);
 
-            // TODO parent plant to entity (TargetEntity)
-
-
+            // Parent plant to the farmer
+            var plantEntity = target.Value;
+            EntityCommandBuffer.AddComponent(index, plantEntity, new Parent { Value = entity });
+            EntityCommandBuffer.SetComponent(index, plantEntity, new Translation { Value = new float3(0) });
         }
     }
-    
+
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
-        var job = new HarvestPlantSystemJob();
-        
-        // Assign values to the fields on your job here, so that it has
-        // everything it needs to do its work when it runs later.
-        // For example,
-        //     job.deltaTime = UnityEngine.Time.deltaTime;
-        
-        
-        
-        // Now that the job is set up, schedule it to be run. 
-        return job.Schedule(this, inputDependencies);
+        var job = new HarvestPlantSystemJob
+        {
+            EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
+        }.Schedule(this, inputDependencies);
+
+        m_EntityCommandBufferSystem.AddJobHandleForProducer(job);
+
+        return job;
     }
 }
