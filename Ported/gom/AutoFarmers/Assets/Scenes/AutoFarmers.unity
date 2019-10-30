@@ -152,6 +152,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mapSize: {x: 64, y: 64}
+  farmPrefab: {fileID: 6773664390219617213, guid: f2ec1a619d24b4b0f9e8050afc622d51,
+    type: 3}
   rockPrefab: {fileID: 7722286474559156674, guid: a52c12e352de349519ef45adb669f497,
     type: 3}
   rockSpawnAttempts: 25
