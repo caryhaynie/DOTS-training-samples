@@ -28,3 +28,14 @@ public struct RockHealth : IComponentData
 {
     public float Value;
 }
+
+public enum LandStateType : byte
+{
+    Tilled,
+    Untilled
+}
+
+public struct LandState : IComponentData
+{
+    public LandStateType Value;
+}
