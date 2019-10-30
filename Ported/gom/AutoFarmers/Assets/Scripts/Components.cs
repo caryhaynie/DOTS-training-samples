@@ -39,3 +39,5 @@ public struct LandState : IComponentData
 {
     public LandStateType Value;
 }
+
+public struct SmashRockIntention : IComponentData {}
