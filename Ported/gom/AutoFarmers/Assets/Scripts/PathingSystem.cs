@@ -26,13 +26,15 @@ public class PathingSystem : JobComponentSystem
     }
 
     [BurstCompile]
-    struct CreateRockDataJob : IJobForEach<RockDimensions, Translation>
+    struct CreateRockDataJob : IJobForEachWithEntity<RockDimensions, Translation>
     {
         public int Width;
 
-        public NativeArray<byte> Rocks;
+        public NativeArray<Entity> Rocks;
 
         public void Execute(
+            Entity entity,
+            int index,
             [ReadOnly] ref RockDimensions dimensions,
             [ReadOnly] ref Translation position)
         {
@@ -45,7 +47,7 @@ public class PathingSystem : JobComponentSystem
                 var endIndex = startIndex + rockWidth;
                 for (var i = startIndex; i < endIndex; ++i)
                 {
-                    Rocks[i] = 1;
+                    Rocks[i] = entity;
                 }
                 startIndex += Width;
             }
@@ -133,7 +135,7 @@ public class PathingSystem : JobComponentSystem
         public int Range;
 
         [ReadOnly]
-        public NativeArray<byte> Rocks;
+        public NativeArray<Entity> Rocks;
 
         public EntityCommandBuffer.Concurrent EntityCommandBuffer;
 
@@ -181,10 +183,14 @@ public class PathingSystem : JobComponentSystem
                 var currentNode = queue.Dequeue();
                 currentTile = currentNode.xy;
 
-                path.Add(new PathElement{Value = currentTile});
+                path.Add(new PathElement{ Value = currentTile });
 
-                if (Rocks[GetTileIndex(currentTile.x, currentTile.y)] == 1)
+                var rock = Rocks[GetTileIndex(currentTile.x, currentTile.y)];
+                if (rock != Entity.Null)
+                {
+                    EntityCommandBuffer.AddComponent(index, entity, new TargetEntity{ Value = rock });
                     break;
+                }
 
                 steps = currentNode.z + 1;
 
@@ -202,7 +208,7 @@ public class PathingSystem : JobComponentSystem
     struct DeallocateTempMapDataJob : IJob
     {
         [DeallocateOnJobCompletion]
-        public NativeArray<byte> Rocks;
+        public NativeArray<Entity> Rocks;
 
         [DeallocateOnJobCompletion]
         public NativeArray<int> Plants;
@@ -225,7 +231,7 @@ public class PathingSystem : JobComponentSystem
             PlantCounts = plantCounts
         }.Schedule(this, inputDeps);
 
-        var rocks = new NativeArray<byte>(tileCount, Allocator.TempJob);
+        var rocks = new NativeArray<Entity>(tileCount, Allocator.TempJob);
         var createRockDataHandle = new CreateRockDataJob
         {
             Width = mapData.Width,
