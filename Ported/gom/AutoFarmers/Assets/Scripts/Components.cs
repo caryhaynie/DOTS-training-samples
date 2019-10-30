@@ -18,4 +18,13 @@ public struct MapData : IComponentData
 }
 
 public struct HarvestablePlant : IComponentData {}
-public struct Rock : IComponentData {}
+
+public struct RockDimensions : IComponentData
+{
+    public int2 Value;
+}
+
+public struct RockHealth : IComponentData
+{
+    public float Value;
+}
