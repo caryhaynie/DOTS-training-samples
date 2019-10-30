@@ -5,6 +5,11 @@ using Unity.Entities;
 
 public struct Farm : IComponentData { }
 
+public struct FarmTileSpawner : IComponentData
+{
+    public Entity Prefab;
+}
+
 public struct RockSpawner : IComponentData
 {
     public Entity Prefab;
@@ -16,11 +21,15 @@ public struct RockSpawner : IComponentData
 public class FarmComponent : MonoBehaviour, IConvertGameObjectToEntity, IDeclareReferencedPrefabs
 {
     public Vector2Int mapSize = new Vector2Int(64, 64);
+    public GameObject farmPrefab;
     public GameObject rockPrefab;
     public int rockSpawnAttempts = 64;
 
     public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
     {
+        var farmTileSpawner = new FarmTileSpawner {
+            Prefab = conversionSystem.GetPrimaryEntity(farmPrefab)
+        };
         var rockSpawner = new RockSpawner {
             Prefab = conversionSystem.GetPrimaryEntity(rockPrefab),
             SpawnAttempts = rockSpawnAttempts
@@ -30,6 +39,7 @@ public class FarmComponent : MonoBehaviour, IConvertGameObjectToEntity, IDeclare
             Height = mapSize.y
         };
 
+        dstManager.AddComponentData(entity, farmTileSpawner);
         dstManager.AddComponentData(entity, rockSpawner);
         dstManager.AddComponentData(entity, mapData);
         dstManager.AddComponentData(entity, new Farm());
@@ -37,6 +47,7 @@ public class FarmComponent : MonoBehaviour, IConvertGameObjectToEntity, IDeclare
 
     public void DeclareReferencedPrefabs(List<GameObject> referencedPrefabs)
     {
+        referencedPrefabs.Add(farmPrefab);
         referencedPrefabs.Add(rockPrefab);
     }
 }

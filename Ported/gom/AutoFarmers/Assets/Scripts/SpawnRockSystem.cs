@@ -9,7 +9,6 @@ public class SpawnRocksSystem : ComponentSystem
 {
     protected override void OnUpdate()
     {
-        var ecb_system = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
         Entities.ForEach((Entity e, ref MapData map, ref RockSpawner rockSpawner) => {
             var random = new Random();
             random.InitState();
@@ -19,6 +18,8 @@ public class SpawnRocksSystem : ComponentSystem
                 int height = random.NextInt(0, 4);
                 int rockX = random.NextInt(0, map.Width - width);
                 int rockY = random.NextInt(0, map.Height - height);
+
+                // TODO :: verify rocks don't overlap
 
                 var entity = PostUpdateCommands.Instantiate(rockSpawner.Prefab);
                 PostUpdateCommands.AddComponent<RockDimensions>(entity, new RockDimensions { Value = new int2(rockX, rockY) });
