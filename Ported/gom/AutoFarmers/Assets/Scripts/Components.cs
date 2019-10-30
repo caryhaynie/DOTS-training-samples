@@ -10,3 +10,9 @@ public struct PathIndex : IComponentData
 {
     public int Value;
 }
+
+public struct MapData : IComponentData
+{
+    public int Width;
+    public int Height;
+}
