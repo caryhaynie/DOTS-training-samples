@@ -8,18 +8,18 @@ using static Unity.Mathematics.math;
 
 public class HarvestPlantSystem : JobComponentSystem
 {
-    // This declares a new kind of job, which is a unit of work to do.
-    // The job is declared as an IJobForEach<Translation, Rotation>,
-    // meaning it will process all entities in the world that have both
-    // Translation and Rotation components. Change it to process the component
-    // types you want.
-    //
-    // The job is also tagged with the BurstCompile attribute, which means
-    // that the Burst compiler will optimize it for the best performance.
+
+    EndSimulationEntityCommandBufferSystem m_EntityCommandBufferSystem;
+
+    protected override void OnCreate()
+    {
+        m_EntityCommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
+    }
+
+
     [BurstCompile]
     [ExcludeComponent(typeof(PathIndex))]
-    [ExcludeComponent(typeof(NeedPath))]
-    struct HarvestPlantSystemJob : IJobForEachWithEntity<Translation, HarvestPlantIntention>
+    struct HarvestPlantSystemJob : IJobForEachWithEntity<HarvestPlantIntention, TargetEntity>
     {
         // Add fields here that your job needs to do its work.
         // For example,
@@ -29,14 +29,15 @@ public class HarvestPlantSystem : JobComponentSystem
         
         public void Execute(Entity entity,
             int index, 
-            ref Translation translation)
+            ref TargetEntity target)
         {
 
-            // TODO add SellPlantIntention
-            // TODO add NeedPath
-            // TODO remove HarvestPlantIntention
+            EntityCommandBuffer.AddComponent<SellPlantIntention>(index, entity);
+            EntityCommandBuffer.AddComponent<NeedPath>(index, entity);
+            EntityCommandBuffer.RemoveComponent<HarvestPlantIntention>(index, entity);
 
-            // TODO parent plant to entity (targetentitycomponent will be assigned by the pathing system)
+            // TODO parent plant to entity (TargetEntity)
+
 
         }
     }
