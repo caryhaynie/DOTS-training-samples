@@ -41,3 +41,8 @@ public struct LandState : IComponentData
 }
 
 public struct SmashRockIntention : IComponentData {}
+
+public struct TargetEntity : IComponentData
+{
+    public Entity Value;
+}
