@@ -31,13 +31,12 @@ public class HarvestPlantSystem : JobComponentSystem
             int index, 
             ref Translation translation)
         {
-            
+
             // TODO add SellPlantIntention
             // TODO add NeedPath
             // TODO remove HarvestPlantIntention
 
-            // TODO get plant
-            // TODO parent plant to entity
+            // TODO parent plant to entity (targetentitycomponent will be assigned by the pathing system)
 
         }
     }

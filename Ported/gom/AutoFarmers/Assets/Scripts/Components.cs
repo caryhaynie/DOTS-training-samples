@@ -56,3 +56,8 @@ public struct Plant : IComponentData
 }
 
 
+
+public struct TargetEntity : IComponentData
+{
+    public Entity Value;
+}
