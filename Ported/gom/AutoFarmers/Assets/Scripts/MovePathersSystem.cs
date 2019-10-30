@@ -39,7 +39,7 @@ public class MovePathersSystem : JobComponentSystem
             position.Value += normalize(directionToTarget) * DeltaPosition;
 
             // Check to see if we've reached the target tile
-            var currentTile = math.floor(position.Value.xy);
+            var currentTile = math.floor(position.Value.xz);
             if (math.all(currentTile == targetTile))
             {
                 if (pathIndex.Value < path.Length - 1)
