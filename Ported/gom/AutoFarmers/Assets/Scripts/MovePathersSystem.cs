@@ -9,7 +9,7 @@ using static Unity.Mathematics.math;
 [UpdateInGroup(typeof(SimulateFarmGroup))]
 public class MovePathersSystem : JobComponentSystem
 {
-    float m_Speed = 1;
+    float m_Speed = 10;
 
     EndSimulationEntityCommandBufferSystem m_EntityCommandBufferSystem;
 

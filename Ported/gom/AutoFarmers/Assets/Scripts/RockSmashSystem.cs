@@ -18,10 +18,12 @@ public class RockSmashSystem : JobComponentSystem
     {
         public NativeArray<Entity> AttackedRocks;
         public EntityCommandBuffer.Concurrent EntityCommandBuffer;
+        [ReadOnly]
+        public ComponentDataFromEntity<RockHealth> RockHealths;
 
         public void Execute(Entity entity, int index, ref TargetEntity targetRock)
         {
-            if (targetRock.Value == Entity.Null)
+            if (!RockHealths.HasComponent(targetRock.Value))
             {
                 EntityCommandBuffer.RemoveComponent<SmashRockIntention>(index, entity);
                 EntityCommandBuffer.RemoveComponent<TargetEntity>(index, entity);
@@ -83,6 +85,7 @@ public class RockSmashSystem : JobComponentSystem
         var BuildArrayJob = new BuildSmashArray
         {
             EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
+            RockHealths = GetComponentDataFromEntity<RockHealth>(),
             AttackedRocks = EntityArray
         }.Schedule(this, inputDependencies);
 

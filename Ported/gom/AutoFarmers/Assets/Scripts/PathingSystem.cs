@@ -159,6 +159,7 @@ public class PathingSystem : JobComponentSystem
 
         public static DynamicBuffer<PathElement> AddPathToEntity(EntityCommandBuffer.Concurrent entityCommandBuffer, int index, Entity entity)
         {
+            entityCommandBuffer.RemoveComponent<NeedPath>(index, entity);
             entityCommandBuffer.AddComponent(index, entity, new PathIndex{ Value = 0 });
             return entityCommandBuffer.AddBuffer<PathElement>(index, entity);
         }
@@ -173,7 +174,7 @@ public class PathingSystem : JobComponentSystem
 
     // [BurstCompile]
     [ExcludeComponent(typeof(PathElement))]
-    [RequireComponentTag(typeof(SmashRockIntention))]
+    [RequireComponentTag(typeof(SmashRockIntention), typeof(NeedPath))]
     struct PathToRockJob : IJobForEachWithEntity<Translation>
     {
         public int Width;
@@ -250,7 +251,7 @@ public class PathingSystem : JobComponentSystem
 
     // [BurstCompile]
     [ExcludeComponent(typeof(PathElement))]
-    [RequireComponentTag(typeof(TillGroundIntention))]
+    [RequireComponentTag(typeof(TillGroundIntention), typeof(NeedPath))]
     struct PathToUntilledJob : IJobForEachWithEntity<Translation>
     {
         public int Width;
@@ -326,7 +327,7 @@ public class PathingSystem : JobComponentSystem
 
     // [BurstCompile]
     [ExcludeComponent(typeof(PathElement))]
-    [RequireComponentTag(typeof(HasSeeds), typeof(PlantSeedIntention))]
+    [RequireComponentTag(typeof(HasSeeds), typeof(PlantSeedIntention), typeof(NeedPath))]
     struct PathToTilledJob : IJobForEachWithEntity<Translation>
     {
         public int Width;
