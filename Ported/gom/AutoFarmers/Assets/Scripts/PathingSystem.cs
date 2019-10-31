@@ -276,12 +276,6 @@ public class PathingSystem : JobComponentSystem
         [DeallocateOnJobCompletion]
         public NativeArray<int> Plants;
 
-        [DeallocateOnJobCompletion]
-        public NativeArray<LandStateType> Land;
-
-        [DeallocateOnJobCompletion]
-        public NativeArray<Entity> LandEntities;
-
         public void Execute() { }
     }
 
@@ -444,15 +438,6 @@ public class PathingSystem : JobComponentSystem
             Rocks = rocks
         }.Schedule(this, inputDeps);
 
-        var land = new NativeArray<LandStateType>(tileCount, Allocator.TempJob);
-        var landEntities = new NativeArray<Entity>(tileCount, Allocator.TempJob);
-        var createLandDataHandle = new CreateLandDataJob
-        {
-            Width = mapData.Width,
-            Land = land,
-            LandEntities = landEntities,
-        }.Schedule(this, inputDeps);
-
         var pathToRockHandle = new PathToRockJob
         {
             Width = mapData.Width,
@@ -477,8 +462,7 @@ public class PathingSystem : JobComponentSystem
 
         var combinedCreationHandles = JobHandle.CombineDependencies(
             createPlantDataHandle,
-            createRockDataHandle,
-            createLandDataHandle);
+            createRockDataHandle);
 
         // var combinedPathingHandles = JobHandle.CombineDependencies(
         //     pathToRockHandle,
@@ -489,8 +473,6 @@ public class PathingSystem : JobComponentSystem
         {
             Rocks = rocks,
             Plants = plantCounts,
-            Land = land,
-            LandEntities = landEntities,
         // }.Schedule(JobHandle.CombineDependencies(combinedCreationHandles, combinedPathingHandles));
         }.Schedule(JobHandle.CombineDependencies(combinedCreationHandles, pathToRockHandle));
 
