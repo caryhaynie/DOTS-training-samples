@@ -48,7 +48,6 @@ public class PickIntentionSystem : JobComponentSystem
             int index,
             [ReadOnly] ref NeedGoal g)
         {
-
             int randomNum = random.NextInt(0, 4); // not inclusive
 
             if (randomNum == 0)
@@ -76,8 +75,7 @@ public class PickIntentionSystem : JobComponentSystem
 
         //}.Schedule(this, inputDeps);
 
-        uint seed = (uint)UnityEngine.Random.Range(0, 1000);
-
+        uint seed = (uint)UnityEngine.Random.Range(1, int.MaxValue);
         var pickIntention = new PickIntentionJob
         {
             EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
