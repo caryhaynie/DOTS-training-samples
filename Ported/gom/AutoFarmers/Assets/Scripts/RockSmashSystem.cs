@@ -81,8 +81,8 @@ public class RockSmashSystem : JobComponentSystem
         var HitRockJob = new DecrementRockHealth
         {
             EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
-            RockHealths = new ComponentDataFromEntity<RockHealth>(),
-            RockTranslations = new ComponentDataFromEntity<Translation>(),
+            RockHealths = GetComponentDataFromEntity<RockHealth>(),
+            RockTranslations = GetComponentDataFromEntity<Translation>(),
             AttackedRocks = EntityArray
         }.Schedule(BuildArrayJob);
 
