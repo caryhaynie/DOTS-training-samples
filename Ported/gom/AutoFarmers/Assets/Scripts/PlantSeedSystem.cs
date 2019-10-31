@@ -15,25 +15,6 @@ public class PlantSeedSystem : JobComponentSystem
         m_EntityCommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
     }
 
-    [BurstCompile]
-    [ExcludeComponent(new[] { typeof(PathIndex), typeof(HasSeeds) })]
-    [RequireComponentTag(new[] { typeof(PlantSeedIntention) })]
-    struct BuySeedsJob : IJobForEachWithEntity<Translation, TargetEntity>
-    {
-        public EntityCommandBuffer.Concurrent EntityCommandBuffer;
-
-        public void Execute(Entity entity,
-            int index,
-            ref Translation position,
-            ref TargetEntity target)
-        {
-            EntityCommandBuffer.RemoveComponent<TargetEntity>(index, entity);
-            EntityCommandBuffer.AddComponent<NeedPath>(index, entity);
-            EntityCommandBuffer.AddComponent<HasSeeds>(index, entity);
-
-        }
-    }
-
     // plant last seed in the path; TODO determine how we'll plant the other seeds WHILE moving, maybe a tag updated by the movement system?
     [BurstCompile]
     [ExcludeComponent(typeof(PathIndex))]
@@ -62,18 +43,15 @@ public class PlantSeedSystem : JobComponentSystem
     
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
-        var job = new BuySeedsJob
+
+        var plantLastSeedJob = new PlantLastSeedJob
         {
             EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
         }.Schedule(this, inputDependencies);
 
-        var buySeedsJob = new PlantLastSeedJob
-        {
-            EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
-        }.Schedule(this, inputDependencies);
 
-        m_EntityCommandBufferSystem.AddJobHandleForProducer(job);
+        m_EntityCommandBufferSystem.AddJobHandleForProducer(plantLastSeedJob);
 
-        return job;
+        return plantLastSeedJob;
     }
 }
