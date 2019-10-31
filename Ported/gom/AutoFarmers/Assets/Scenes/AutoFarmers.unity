@@ -161,7 +161,7 @@ MonoBehaviour:
     type: 3}
   storePrefab: {fileID: 4504199276255158680, guid: 8c3f672b4e04942da85afe9d41360c2f,
     type: 3}
-  rockSpawnAttempts: 1
+  rockSpawnAttempts: 10
   storeCount: 1
 --- !u!114 &16322121
 MonoBehaviour:
