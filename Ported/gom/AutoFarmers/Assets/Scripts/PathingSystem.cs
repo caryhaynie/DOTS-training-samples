@@ -66,7 +66,11 @@ public class PathingSystem : JobComponentSystem
     struct CreateLandDataJob : IJobForEachWithEntity<Translation, LandState>
     {
         public int Width;
+
+        [NativeDisableContainerSafetyRestriction]
         public NativeArray<LandStateType> Land;
+
+        [NativeDisableContainerSafetyRestriction]
         public NativeArray<Entity> LandEntities;
 
         public void Execute(
