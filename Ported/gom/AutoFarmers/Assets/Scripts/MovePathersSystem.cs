@@ -6,6 +6,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using static Unity.Mathematics.math;
 
+[UpdateInGroup(typeof(SimulateFarmGroup))]
 public class MovePathersSystem : JobComponentSystem
 {
     float m_Speed = 1;

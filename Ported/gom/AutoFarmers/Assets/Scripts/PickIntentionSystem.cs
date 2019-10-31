@@ -7,6 +7,7 @@ using Unity.Transforms;
 using UnityEngine;
 using static Unity.Mathematics.math;
 
+[UpdateInGroup(typeof(SimulateFarmGroup))]
 public class PickIntentionSystem : JobComponentSystem
 {
 
@@ -65,7 +66,7 @@ public class PickIntentionSystem : JobComponentSystem
 
         }
     }
-    
+
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
 

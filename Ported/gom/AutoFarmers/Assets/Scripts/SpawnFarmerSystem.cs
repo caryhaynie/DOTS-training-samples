@@ -1,6 +1,7 @@
 using Unity.Entities;
 using Unity.Transforms;
 
+[UpdateInGroup(typeof(SpawnGroup))]
 public class SpawnFarmerSystem : ComponentSystem
 {
     protected override void OnUpdate()

@@ -7,6 +7,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using static Unity.Mathematics.math;
 
+[UpdateInGroup(typeof(SimulateFarmGroup))]
 public class PathingSystem : JobComponentSystem
 {
     EndSimulationEntityCommandBufferSystem m_EntityCommandBufferSystem;
@@ -66,7 +67,11 @@ public class PathingSystem : JobComponentSystem
     struct CreateLandDataJob : IJobForEachWithEntity<Translation, LandState>
     {
         public int Width;
+
+        [NativeDisableContainerSafetyRestriction]
         public NativeArray<LandStateType> Land;
+
+        [NativeDisableContainerSafetyRestriction]
         public NativeArray<Entity> LandEntities;
 
         public void Execute(
@@ -140,7 +145,7 @@ public class PathingSystem : JobComponentSystem
 
     struct Utils
     {
-        public static unsafe void Init(int width, int height, float3 worldPosition, out NativeArray<int> distances, out PQueue queue, out int steps)
+        public static unsafe void Init(int width, int height, float3 worldPosition, out NativeArray<int> distances, out NativeArray<int2> prev, out PQueue queue, out int steps)
         {
             int mapSize = width * height;
             distances = new NativeArray<int>(mapSize, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
@@ -154,6 +159,30 @@ public class PathingSystem : JobComponentSystem
 
             queue = new PQueue(mapSize, Allocator.Temp);
             queue.Enqueue(currentTile, 0);
+
+            prev = new NativeArray<int2>(mapSize, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+            var invalidValue = new int2(-1, -1);
+            UnsafeUtility.MemCpyReplicate(prev.GetUnsafePtr(), UnsafeUtility.AddressOf(ref invalidValue), UnsafeUtility.SizeOf<int2>(), prev.Length);
+        }
+
+        public static void ConstructPath(int endIndex, int width, NativeArray<int2> prev, DynamicBuffer<PathElement> path)
+        {
+            var invalidTile = new int2(-1, -1);
+            var index = endIndex;
+            while (index > 0 && index < prev.Length && !math.all(prev[index] == invalidTile))
+            {
+                path.Add(new PathElement{ Value = prev[index] });
+                index = width * prev[index].y + prev[index].x;
+            }
+
+            // Reverse
+            for (int i = 0; i < path.Length / 2; ++i)
+            {
+                var j = path.Length - 1 - i;
+                var temp = path[j];
+                path[j] = path[i];
+                path[i] = temp;
+            }
         }
 
         public static DynamicBuffer<PathElement> AddPathToEntity(EntityCommandBuffer.Concurrent entityCommandBuffer, int index, Entity entity)
@@ -186,16 +215,18 @@ public class PathingSystem : JobComponentSystem
 
         int GetTileIndex(int tileX, int tileY) =>  tileY * Width + tileX;
 
-        void Consider(int x, int y, int steps, ref PQueue queue, NativeArray<int> distances)
+        void Consider(
+            int2 currentTile, int2 dir, int steps,
+            ref PQueue queue, NativeArray<int> distances, NativeArray<int2> prev)
         {
-            var neighborTile = new int2(x, y);
-            int neighborIndex = GetTileIndex(x, y);
-
+            int2 neighborTile = currentTile + dir;
+            int neighborIndex = GetTileIndex(neighborTile.x, neighborTile.y);
             if (distances[neighborIndex] > 0) return;
 
             if (-distances[neighborIndex] > steps)
             {
                 distances[neighborIndex] = -steps;
+                prev[neighborIndex] = currentTile;
                 queue.Enqueue(neighborTile, steps);
             }
         }
@@ -205,15 +236,14 @@ public class PathingSystem : JobComponentSystem
             int index,
             [ReadOnly] ref Translation position)
         {
-            Utils.Init(Width, Height, position.Value, out NativeArray<int> distances, out PQueue queue, out int steps);
+            Utils.Init(Width, Height, position.Value, out NativeArray<int> distances, out NativeArray<int2> prev, out PQueue queue, out int steps);
             var path = Utils.AddPathToEntity(EntityCommandBuffer, index, entity);
+            int tileIndex = 0;
 
             while (queue.Length > 0 && steps < Range)
             {
                 var tile = queue.Dequeue();
-                var tileIndex = GetTileIndex(tile.x, tile.y);
-
-                path.Add(new PathElement{ Value = tile });
+                tileIndex = GetTileIndex(tile.x, tile.y);
 
                 var rock = Rocks[tileIndex];
                 if (rock != Entity.Null)
@@ -224,14 +254,17 @@ public class PathingSystem : JobComponentSystem
 
                 steps = Utils.MarkVisitedAndGetNextDistance(distances, tileIndex);
 
-                if (tile.x + 1 < Width - 1) Consider(tile.x + 1, tile.y, steps, ref queue, distances);
-                if (tile.x - 1 > 0) Consider(tile.x - 1, tile.y, steps, ref queue, distances);
-                if (tile.y + 1 < Height - 1) Consider(tile.x, tile.y + 1, steps, ref queue, distances);
-                if (tile.y - 1 > 0) Consider(tile.x, tile.y - 1, steps, ref queue, distances);
+                if (tile.x + 1 < Width - 1) Consider(tile, new int2(1, 0), steps, ref queue, distances, prev);
+                if (tile.x - 1 > 0) Consider(tile, new int2(-1, 0), steps, ref queue, distances, prev);
+                if (tile.y + 1 < Height - 1) Consider(tile, new int2(0, 1), steps, ref queue, distances, prev);
+                if (tile.y - 1 > 0) Consider(tile, new int2(0, -1), steps, ref queue, distances, prev);
             }
+
+            Utils.ConstructPath(tileIndex, Width, prev, path);
 
             distances.Dispose();
             queue.Dispose();
+            prev.Dispose();
         }
     }
 
@@ -242,12 +275,6 @@ public class PathingSystem : JobComponentSystem
 
         [DeallocateOnJobCompletion]
         public NativeArray<int> Plants;
-
-        [DeallocateOnJobCompletion]
-        public NativeArray<LandStateType> Land;
-
-        [DeallocateOnJobCompletion]
-        public NativeArray<Entity> LandEntities;
 
         public void Execute() { }
     }
@@ -295,7 +322,7 @@ public class PathingSystem : JobComponentSystem
         {
             return;
             var path = Utils.AddPathToEntity(EntityCommandBuffer, index, entity);
-            Utils.Init(Width, Height, position.Value, out NativeArray<int> distances, out PQueue queue, out int steps);
+            Utils.Init(Width, Height, position.Value, out NativeArray<int> distances, out NativeArray<int2> prev, out PQueue queue, out int steps);
 
             while (queue.Length > 0 && steps < Range)
             {
@@ -365,7 +392,7 @@ public class PathingSystem : JobComponentSystem
         {
             return;
             var path = Utils.AddPathToEntity(EntityCommandBuffer, index, entity);
-            Utils.Init(Width, Height, position.Value, out NativeArray<int> distances, out PQueue queue, out int steps);
+            Utils.Init(Width, Height, position.Value, out NativeArray<int> distances, out NativeArray<int2> prev, out PQueue queue, out int steps);
 
             while (queue.Length > 0 && steps < Range)
             {
@@ -411,15 +438,6 @@ public class PathingSystem : JobComponentSystem
             Rocks = rocks
         }.Schedule(this, inputDeps);
 
-        var land = new NativeArray<LandStateType>(tileCount, Allocator.TempJob);
-        var landEntities = new NativeArray<Entity>(tileCount, Allocator.TempJob);
-        var createLandDataHandle = new CreateLandDataJob
-        {
-            Width = mapData.Width,
-            Land = land,
-            LandEntities = landEntities,
-        }.Schedule(this, inputDeps);
-
         var pathToRockHandle = new PathToRockJob
         {
             Width = mapData.Width,
@@ -444,8 +462,7 @@ public class PathingSystem : JobComponentSystem
 
         var combinedCreationHandles = JobHandle.CombineDependencies(
             createPlantDataHandle,
-            createRockDataHandle,
-            createLandDataHandle);
+            createRockDataHandle);
 
         // var combinedPathingHandles = JobHandle.CombineDependencies(
         //     pathToRockHandle,
@@ -456,8 +473,6 @@ public class PathingSystem : JobComponentSystem
         {
             Rocks = rocks,
             Plants = plantCounts,
-            Land = land,
-            LandEntities = landEntities,
         // }.Schedule(JobHandle.CombineDependencies(combinedCreationHandles, combinedPathingHandles));
         }.Schedule(JobHandle.CombineDependencies(combinedCreationHandles, pathToRockHandle));
 

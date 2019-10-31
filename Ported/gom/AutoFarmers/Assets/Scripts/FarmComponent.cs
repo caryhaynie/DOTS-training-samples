@@ -32,6 +32,7 @@ public class FarmComponent : MonoBehaviour, IConvertGameObjectToEntity, IDeclare
     public GameObject farmerPrefab;
     public GameObject rockPrefab;
     public GameObject storePrefab;
+    public GameObject tillPrefab;
     public int rockSpawnAttempts = 64;
     public int storeCount = 16;
 
@@ -54,7 +55,8 @@ public class FarmComponent : MonoBehaviour, IConvertGameObjectToEntity, IDeclare
         };
         var prefabManager = new PrefabManager {
             DronePrefab = conversionSystem.GetPrimaryEntity(dronePrefab),
-            FarmerPrefab = conversionSystem.GetPrimaryEntity(farmerPrefab)
+            FarmerPrefab = conversionSystem.GetPrimaryEntity(farmerPrefab),
+            TilledPrefab = conversionSystem.GetPrimaryEntity(tillPrefab)
         };
 
         dstManager.AddComponentData(entity, farmTileSpawner);
@@ -72,5 +74,6 @@ public class FarmComponent : MonoBehaviour, IConvertGameObjectToEntity, IDeclare
         referencedPrefabs.Add(farmerPrefab);
         referencedPrefabs.Add(rockPrefab);
         referencedPrefabs.Add(storePrefab);
+        referencedPrefabs.Add(tillPrefab);
     }
 }
