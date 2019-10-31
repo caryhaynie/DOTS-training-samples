@@ -28,6 +28,8 @@ public class SpawnFarmTilesSystem : ComponentSystem
                     PostUpdateCommands.AddComponent<LandState>(entity, new LandState { Value = LandStateType.Untilled });
                     PostUpdateCommands.SetComponent<Translation>(entity, new Translation { Value = new float3(x, 0f, y) });
                     LandMap[tileIndex++] = entity;
+                    if (x == 0 && y == 0)
+                        PostUpdateCommands.AddComponent<NeedsTilling>(entity);
                 }
             }
             PostUpdateCommands.DestroyEntity(farmTileSpawner.Prefab);
