@@ -1,5 +1,6 @@
 using Unity.Entities;
 using Unity.Transforms;
+using Unity.Mathematics;
 
 [UpdateInGroup(typeof(SpawnGroup))]
 public class SpawnFarmerSystem : ComponentSystem
@@ -11,7 +12,7 @@ public class SpawnFarmerSystem : ComponentSystem
             for (int i = 0; i < spawnFarmer.FarmerCount; i++)
             {
                 var farmer = PostUpdateCommands.Instantiate(prefabManager.FarmerPrefab);
-                PostUpdateCommands.SetComponent<Translation>(farmer, new Translation { Value = translation.Value });
+                PostUpdateCommands.SetComponent<Translation>(farmer, new Translation { Value = translation.Value - new float3(5, 0, 5) });
             }
             PostUpdateCommands.RemoveComponent<SpawnFarmer>(e);
         });

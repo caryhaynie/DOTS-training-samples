@@ -13,6 +13,7 @@ public class RockMapSystem : JobComponentSystem
     EndSimulationEntityCommandBufferSystem m_EntityCommandBufferSystem;
 
     public NativeArray<Entity> RockMap;
+    public NativeArray<Entity> StoreMap;
 
     public JobHandle Handle;
 
@@ -24,8 +25,10 @@ public class RockMapSystem : JobComponentSystem
     protected override void OnDestroy()
     {
         if (RockMap.IsCreated) RockMap.Dispose();
+        if (StoreMap.IsCreated) StoreMap.Dispose();
     }
 
+    [BurstCompile]
     struct CreateRockDataJob : IJobForEachWithEntity<RockDimensions, Translation>
     {
         public int Width;
@@ -56,14 +59,23 @@ public class RockMapSystem : JobComponentSystem
         }
     }
 
-    struct InitJob : IJob
+    [BurstCompile]
+    struct CreateStoreDataJob : IJobForEachWithEntity<Store, Translation>
     {
-        [WriteOnly]
-        public NativeArray<Entity> Rocks;
+        public int Width;
 
-        public unsafe void Execute()
+        [NativeDisableParallelForRestriction]
+        [WriteOnly]
+        public NativeArray<Entity> Stores;
+
+        public void Execute(
+            Entity entity, int index,
+            [ReadOnly] ref Store store,
+            [ReadOnly] ref Translation position)
         {
-            UnsafeUtility.MemClear(Rocks.GetUnsafePtr(), Rocks.Length * UnsafeUtility.SizeOf<Entity>());
+            var tile = new int2(math.floor(position.Value.xz));
+            var tileIndex = tile.y * Width + tile.x;
+            Stores[tileIndex] = entity;
         }
     }
 
@@ -83,11 +95,22 @@ public class RockMapSystem : JobComponentSystem
         if (RockMap.IsCreated) RockMap.Dispose();
         RockMap = new NativeArray<Entity>(mapData.Width * mapData.Height, Allocator.TempJob);
 
-        Handle = new CreateRockDataJob
+        if (StoreMap.IsCreated) StoreMap.Dispose();
+        StoreMap = new NativeArray<Entity>(mapData.Width * mapData.Height, Allocator.TempJob);
+
+        var rockHandle = new CreateRockDataJob
         {
             Width = mapData.Width,
             Rocks = RockMap
         }.Schedule(this, inputDeps);
+
+        var storeHandle = new CreateStoreDataJob
+        {
+            Width = mapData.Width,
+            Stores = StoreMap,
+        }.Schedule(this, inputDeps);
+
+        Handle = JobHandle.CombineDependencies(rockHandle, storeHandle);
 
         return Handle;
     }
