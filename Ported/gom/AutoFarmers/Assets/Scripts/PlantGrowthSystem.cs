@@ -8,9 +8,6 @@ using static Unity.Mathematics.math;
 
 public class PlantGrowthSystem : JobComponentSystem
 {
-    public static float growthScale = 0.1f;
-    public static float grownSize = 3f;
-
     EndSimulationEntityCommandBufferSystem m_EntityCommandBufferSystem;
 
     protected override void OnCreate()
@@ -23,6 +20,8 @@ public class PlantGrowthSystem : JobComponentSystem
     struct PlantGrowthJob : IJobForEachWithEntity<Scale>
     {
         public EntityCommandBuffer.Concurrent EntityCommandBuffer;
+        public float growthScale;
+        public float grownSize;
 
         public void Execute(
             Entity entity,
@@ -42,11 +41,14 @@ public class PlantGrowthSystem : JobComponentSystem
     
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
+
         var growPlantJob = new PlantGrowthJob
         {
             EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
+            growthScale = 0.1f,
+            grownSize = 5
 
-        }.Schedule(this, inputDependencies);
+}.Schedule(this, inputDependencies);
 
         m_EntityCommandBufferSystem.AddJobHandleForProducer(growPlantJob);
 
