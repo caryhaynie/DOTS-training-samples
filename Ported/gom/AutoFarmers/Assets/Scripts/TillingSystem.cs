@@ -6,19 +6,22 @@ using Unity.Transforms;
 
 public class TillingSystem : JobComponentSystem
 {
-    [RequireComponentTag(typeof(NeedsTilling))]
-    struct MarkTilesAsTilledJob : IJobForEachWithEntity_EC<LandState>
+    [ExcludeComponent(typeof(NeedPath), typeof(PathElement))]
+    [RequireComponentTag(typeof(TillGroundIntention))]
+    struct MarkTilesAsTilledJob : IJobForEachWithEntity<TargetEntity>
     {
         public EntityCommandBuffer.Concurrent ECB;
         public Entity TilledPrefab;
-        public void Execute(Entity entity, int jobIndex, ref LandState landState)
-        {
-            var tilled = ECB.Instantiate(jobIndex, TilledPrefab);
-            ECB.AddComponent<Parent>(jobIndex, tilled, new Parent { Value = entity });
-            ECB.SetComponent<Translation>(jobIndex, tilled, new Translation { Value = new float3(0.25f, 0.5f, 0.25f) });
 
-            ECB.SetComponent<LandState>(jobIndex, entity, new LandState { Value = LandStateType.Tilled });
-            ECB.RemoveComponent<NeedsTilling>(jobIndex, entity);
+        public void Execute(Entity farmerEntity, int jobIndex, [ReadOnly] ref TargetEntity target)
+        {
+            var landEntity = target.Value;
+            var tilledEntity = ECB.Instantiate(jobIndex, TilledPrefab);
+            ECB.AddComponent<Parent>(jobIndex, tilledEntity, new Parent { Value = landEntity });
+            ECB.SetComponent<Translation>(jobIndex, tilledEntity, new Translation { Value = new float3(0.25f, 0.5f, 0.25f) });
+            ECB.SetComponent<LandState>(jobIndex, landEntity, new LandState { Value = LandStateType.Tilled });
+            ECB.RemoveComponent<TillGroundIntention>(jobIndex, farmerEntity);
+            ECB.AddComponent<NeedGoal>(jobIndex, farmerEntity);
         }
     }
 
@@ -48,7 +51,7 @@ public class TillingSystem : JobComponentSystem
         [ReadOnly]
         [DeallocateOnJobCompletion]
         public NativeArray<Entity> GroundToMarkToTill;
-        
+
         public EntityCommandBuffer.Concurrent EntityCommandBuffer;
 
         public void Execute()
@@ -69,31 +72,12 @@ public class TillingSystem : JobComponentSystem
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        var ToMarkToTillQuery = GetEntityQuery(new EntityQueryDesc {
-            None = new ComponentType[] { typeof(PathElement) },
-            All = new ComponentType[] { typeof(TillGroundIntention), typeof(TargetEntity) }
-        });
-        
-        NativeArray<Entity> EntityArray = new NativeArray<Entity>(ToMarkToTillQuery.CalculateEntityCount(), Allocator.TempJob);
-
         var MarkTilled = new MarkTilesAsTilledJob {
             ECB = m_ECBSystem.CreateCommandBuffer().ToConcurrent(),
             TilledPrefab = GetSingleton<PrefabManager>().TilledPrefab
         }.Schedule(this, inputDeps);
+        m_ECBSystem.AddJobHandleForProducer(MarkTilled);
 
-        var BuildArrayJob = new BuildTillArray
-        {
-            EntityCommandBuffer = m_ECBSystem.CreateCommandBuffer().ToConcurrent(),
-            GroundToMarkToTill = EntityArray
-        }.Schedule(this, MarkTilled);
-
-        var MarkToTillJob = new MarkToTill 
-        {
-            EntityCommandBuffer = m_ECBSystem.CreateCommandBuffer().ToConcurrent(),
-            GroundToMarkToTill = EntityArray
-        }.Schedule(BuildArrayJob);
-
-        m_ECBSystem.AddJobHandleForProducer(MarkToTillJob);
-        return MarkToTillJob;
+        return MarkTilled;
     }
 }
