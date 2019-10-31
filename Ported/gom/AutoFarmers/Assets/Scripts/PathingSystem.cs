@@ -201,7 +201,7 @@ public class PathingSystem : JobComponentSystem
 
     // [BurstCompile]
     [ExcludeComponent(typeof(PathElement))]
-    [RequireComponentTag(typeof(SmashRockIntention), typeof(NeedPath))]
+    [RequireComponentTag(typeof(SmashRockIntention))]
     struct PathToRockJob : IJobForEachWithEntity<Translation>
     {
         public int Width;
@@ -281,7 +281,7 @@ public class PathingSystem : JobComponentSystem
 
     // [BurstCompile]
     [ExcludeComponent(typeof(PathElement))]
-    [RequireComponentTag(typeof(TillGroundIntention), typeof(NeedPath))]
+    [RequireComponentTag(typeof(TillGroundIntention))]
     struct PathToUntilledJob : IJobForEachWithEntity<Translation>
     {
         public int Width;
@@ -351,7 +351,7 @@ public class PathingSystem : JobComponentSystem
 
     // [BurstCompile]
     [ExcludeComponent(typeof(PathElement))]
-    [RequireComponentTag(typeof(HasSeeds), typeof(PlantSeedIntention), typeof(NeedPath))]
+    [RequireComponentTag(typeof(HasSeeds), typeof(PlantSeedIntention))]
     struct PathToTilledJob : IJobForEachWithEntity<Translation>
     {
         public int Width;
