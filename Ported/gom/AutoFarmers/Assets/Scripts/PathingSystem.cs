@@ -143,7 +143,7 @@ public class PathingSystem : JobComponentSystem
         public static unsafe void Init(int width, int height, float3 worldPosition, out NativeArray<int> distances, out PQueue queue, out int steps)
         {
             int mapSize = width * height;
-            distances = new NativeArray<int>(mapSize, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+            distances = new NativeArray<int>(mapSize, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
             var minValue = int.MinValue;
             UnsafeUtility.MemCpyReplicate(distances.GetUnsafePtr(), UnsafeUtility.AddressOf(ref minValue), 4, distances.Length);
 
@@ -152,7 +152,7 @@ public class PathingSystem : JobComponentSystem
             steps = 0;
             distances[currentIndex] = 0;
 
-            queue = new PQueue(mapSize, Allocator.TempJob);
+            queue = new PQueue(mapSize, Allocator.Temp);
             queue.Enqueue(currentTile, 0);
         }
 
