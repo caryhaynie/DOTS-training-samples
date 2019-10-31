@@ -55,7 +55,7 @@ public class PathingSystem : JobComponentSystem
                 var endIndex = startIndex + rockWidth;
                 for (var i = startIndex; i < endIndex; ++i)
                 {
-                    if (i < Rocks.Length) Rocks[i] = entity;
+                    Rocks[i] = entity;
                 }
                 startIndex += Width;
             }
