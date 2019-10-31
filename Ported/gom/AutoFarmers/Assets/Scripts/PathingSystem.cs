@@ -259,13 +259,13 @@ public class PathingSystem : JobComponentSystem
             createLandDataHandle);
 
         // Cleanup
-        new DeallocateTempMapDataJob
+        var DeallocateJob = new DeallocateTempMapDataJob
         {
             Rocks = rocks,
             Plants = plantCounts,
             Land = land
         }.Schedule(JobHandle.CombineDependencies(combinedCreationHandles, pathToRockHandle));
 
-        return pathToRockHandle;
+        return DeallocateJob;
     }
 }

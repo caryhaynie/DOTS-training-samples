@@ -34,6 +34,7 @@ public class RockSmashSystem : JobComponentSystem
         [ReadOnly]
         [DeallocateOnJobCompletion]
         public NativeArray<Entity> AttackedRocks;
+
         public ComponentDataFromEntity<RockHealth> RockHealths;
         public EntityCommandBuffer.Concurrent EntityCommandBuffer;
 
@@ -73,7 +74,9 @@ public class RockSmashSystem : JobComponentSystem
 
         var HitRockJob = new DecrementRockHealth
         {
-            EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
+            EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
+            RockHealths = new ComponentDataFromEntity<RockHealth>(),
+            AttackedRocks = EntityArray
         }.Schedule(BuildArrayJob);
 
         m_EntityCommandBufferSystem.AddJobHandleForProducer(HitRockJob);
