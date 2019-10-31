@@ -32,11 +32,12 @@ public class PathingSystem : JobComponentSystem
         }
     }
 
-    [BurstCompile]
+    // [BurstCompile]
     struct CreateRockDataJob : IJobForEachWithEntity<RockDimensions, Translation>
     {
         public int Width;
 
+        [NativeDisableContainerSafetyRestriction]
         public NativeArray<Entity> Rocks;
 
         public void Execute(
@@ -54,7 +55,7 @@ public class PathingSystem : JobComponentSystem
                 var endIndex = startIndex + rockWidth;
                 for (var i = startIndex; i < endIndex; ++i)
                 {
-                    Rocks[i] = entity;
+                    if (i < Rocks.Length) Rocks[i] = entity;
                 }
                 startIndex += Width;
             }
