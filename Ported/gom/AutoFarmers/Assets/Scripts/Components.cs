@@ -58,3 +58,9 @@ public struct TargetEntity : IComponentData
 {
     public Entity Value;
 }
+
+
+public struct PlantGrowth : IComponentData
+{
+    public float Value;
+}
