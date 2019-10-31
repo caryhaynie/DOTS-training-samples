@@ -14,15 +14,15 @@ public class SpawnRocksSystem : ComponentSystem
             random.InitState();
             for (int attempt = 0; attempt < rockSpawner.SpawnAttempts; attempt++)
             {
-                int width = random.NextInt(0, 4);
-                int height = random.NextInt(0, 4);
-                int rockX = random.NextInt(0, map.Width - width);
-                int rockY = random.NextInt(0, map.Height - height);
+                int width = random.NextInt(1, 4);
+                int height = random.NextInt(1, 4);
+                int rockX = random.NextInt(0, map.Width - width - 1);
+                int rockY = random.NextInt(0, map.Height - height - 1);
 
                 // TODO :: verify rocks don't overlap
 
                 var entity = PostUpdateCommands.Instantiate(rockSpawner.Prefab);
-                PostUpdateCommands.AddComponent<RockDimensions>(entity, new RockDimensions { Value = new int2(rockX, rockY) });
+                PostUpdateCommands.AddComponent<RockDimensions>(entity, new RockDimensions { Value = new int2(width, height) });
                 var StartHealth = GetRockStartingHealth(width, height);
                 PostUpdateCommands.AddComponent<RockHealth>(entity, new RockHealth { CurrentHealth = StartHealth, MaxHealth = StartHealth });
                 //PostUpdateCommands.SetComponent<Translation>(entity, new Translation { Value = new float3(rockX, GetRockStartingDepth(ref random), rockY) });
