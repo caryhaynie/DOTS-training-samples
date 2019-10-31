@@ -32,25 +32,25 @@ public class MovePathersSystem : JobComponentSystem
             ref Translation position,
             ref PathIndex pathIndex)
         {
-            var targetTile = path[pathIndex.Value].Value;
-            var targetPosition = new float3(targetTile.x, 0, targetTile.y) + new float3(.5f, 0, .5f);
-            var directionToTarget = targetPosition - position.Value;
-
-            // Move farmer
-            position.Value += normalize(directionToTarget) * DeltaPosition;
-
-            // Check to see if we've reached the target tile
-            var currentTile = math.floor(position.Value.xz);
-            if (math.all(currentTile == targetTile))
+            if (pathIndex.Value == path.Length)
             {
-                if (pathIndex.Value < path.Length - 1)
+                EntityCommandBuffer.RemoveComponent<PathElement>(index, entity);
+                EntityCommandBuffer.RemoveComponent<PathIndex>(index, entity);
+            }
+            else
+            {
+                var targetTile = path[pathIndex.Value].Value;
+                var targetPosition = new float3(targetTile.x, 0, targetTile.y) + new float3(.5f, 0, .5f);
+                var directionToTarget = targetPosition - position.Value;
+
+                // Move farmer
+                position.Value += normalize(directionToTarget) * DeltaPosition;
+
+                // Check to see if we've reached the target tile
+                var currentTile = math.floor(position.Value.xz);
+                if (math.all(currentTile == targetTile) && pathIndex.Value < path.Length - 1)
                 {
                     pathIndex.Value++;
-                }
-                else
-                {
-                    EntityCommandBuffer.RemoveComponent<PathElement>(index, entity);
-                    EntityCommandBuffer.RemoveComponent<PathIndex>(index, entity);
                 }
             }
         }
