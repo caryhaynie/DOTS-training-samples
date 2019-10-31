@@ -53,7 +53,7 @@ public class RockSmashSystem : JobComponentSystem
 
                     // "Animate" the rock moving downward
                     var incomingTranslation = RockTranslations[entity];
-                    RockTranslations[entity] = new Translation { Value = new float3(incomingTranslation.Value.x, -0.5f + (health.CurrentHealth / health.MaxHealth), incomingTranslation.Value.z) };
+                    RockTranslations[entity] = new Translation { Value = new float3(incomingTranslation.Value.x, -0.5f + ((float)(health.CurrentHealth) / health.MaxHealth), incomingTranslation.Value.z) };
 
                     if (health.CurrentHealth <= 0)
                     {
@@ -71,7 +71,12 @@ public class RockSmashSystem : JobComponentSystem
 
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
-        var SmashesQuery = GetEntityQuery(ComponentType.ReadOnly<SmashRockIntention>());
+        var SmashesQuery = GetEntityQuery(new EntityQueryDesc {
+            None = new ComponentType[] { typeof(PathElement) },
+            All = new ComponentType[] { typeof(SmashRockIntention), typeof(TargetEntity) }
+        });
+            
+            //ComponentType.ReadOnly<SmashRockIntention>(), ComponentType.ReadOnly<TargetEntity>(), ComponentType.ReadOnly<PathElement>());
         NativeArray<Entity> EntityArray = new NativeArray<Entity>(SmashesQuery.CalculateEntityCount(), Allocator.TempJob);
 
         var BuildArrayJob = new BuildSmashArray
