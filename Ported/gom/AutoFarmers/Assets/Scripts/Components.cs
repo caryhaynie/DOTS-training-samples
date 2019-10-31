@@ -80,7 +80,7 @@ public struct PrefabManager : IComponentData
 {
     public Entity DronePrefab;
     public Entity FarmerPrefab;
-    //public Entity TilledPrefab;
+    public Entity TilledPrefab;
 }
 
 public struct SpawnFarmer : IComponentData
@@ -89,3 +89,5 @@ public struct SpawnFarmer : IComponentData
 }
 
 public struct Store : IComponentData {}
+
+public struct NeedsTilling : IComponentData {}
