@@ -24,16 +24,16 @@ public class SpawnFarmTilesSystem : ComponentSystem
             {
                 for (int x = 0; x < mapData.Width; x++)
                 {
-                    var entity = PostUpdateCommands.Instantiate(farmTileSpawner.Prefab);
-                    PostUpdateCommands.AddComponent<LandState>(entity, new LandState { Value = LandStateType.Untilled });
-                    PostUpdateCommands.SetComponent<Translation>(entity, new Translation { Value = new float3(x, 0f, y) });
+                    var entity = EntityManager.Instantiate(farmTileSpawner.Prefab);
+                    EntityManager.AddComponentData<LandState>(entity, new LandState { Value = LandStateType.Untilled });
+                    EntityManager.SetComponentData<Translation>(entity, new Translation { Value = new float3(x, 0f, y) });
                     LandEntities[tileIndex++] = entity;
                     if (x == 0 && y == 0)
-                        PostUpdateCommands.AddComponent<NeedsTilling>(entity);
+                        EntityManager.AddComponent<NeedsTilling>(entity);
                 }
             }
-            PostUpdateCommands.DestroyEntity(farmTileSpawner.Prefab);
-            PostUpdateCommands.RemoveComponent<FarmTileSpawner>(e);
+            EntityManager.DestroyEntity(farmTileSpawner.Prefab);
+            EntityManager.RemoveComponent<FarmTileSpawner>(e);
         });
     }
 }
