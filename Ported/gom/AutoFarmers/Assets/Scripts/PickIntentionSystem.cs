@@ -60,7 +60,7 @@ public class PickIntentionSystem : JobComponentSystem
             if (randomNum == 3)
                 EntityCommandBuffer.AddComponent<HarvestPlantIntention>(index, entity);
 
-            EntityCommandBuffer.AddComponent<NeedPath>(index, entity);
+            //EntityCommandBuffer.AddComponent<NeedPath>(index, entity);
             EntityCommandBuffer.RemoveComponent<NeedGoal>(index, entity);
 
 
