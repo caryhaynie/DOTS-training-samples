@@ -31,6 +31,7 @@ public class RockSmashSystem : JobComponentSystem
         }
     }
 
+    // Don't Burst because a rock can be attacked multiple times, and we don't want write collisions
     struct DecrementRockHealth : IJob
     {
         [ReadOnly]
