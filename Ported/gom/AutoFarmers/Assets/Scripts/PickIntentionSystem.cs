@@ -76,10 +76,12 @@ public class PickIntentionSystem : JobComponentSystem
 
         //}.Schedule(this, inputDeps);
 
+        uint seed = (uint)UnityEngine.Random.Range(0, 1000);
+
         var pickIntention = new PickIntentionJob
         {
             EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
-            random = new Unity.Mathematics.Random(1234)
+            random = new Unity.Mathematics.Random(seed)
 
         }.Schedule(this, inputDeps);
 
