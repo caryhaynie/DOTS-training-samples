@@ -43,13 +43,15 @@ public class PlantSeedSystem : JobComponentSystem
     
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
-        var job = new PlantLastSeedJob
+
+        var plantLastSeedJob = new PlantLastSeedJob
         {
             EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
         }.Schedule(this, inputDependencies);
 
-        m_EntityCommandBufferSystem.AddJobHandleForProducer(job);
 
-        return job;
+        m_EntityCommandBufferSystem.AddJobHandleForProducer(plantLastSeedJob);
+
+        return plantLastSeedJob;
     }
 }
