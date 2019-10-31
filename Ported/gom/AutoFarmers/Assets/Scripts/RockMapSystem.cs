@@ -19,7 +19,10 @@ public class RockMapSystem : JobComponentSystem
         m_EntityCommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
     }
 
-    protected override void OnDestroy() => RockMap.Dispose();
+    protected override void OnDestroy()
+    {
+        if (RockMap.IsCreated) RockMap.Dispose();
+    }
 
     struct CreateRockDataJob : IJobForEachWithEntity<RockDimensions, Translation>
     {
@@ -62,19 +65,28 @@ public class RockMapSystem : JobComponentSystem
         }
     }
 
+    JobHandle m_Handles;
+
+    public void AddJobHandleForProducer(JobHandle jobHandle)
+    {
+        m_Handles = JobHandle.CombineDependencies(jobHandle, m_Handles);
+    }
+
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
+        m_Handles.Complete();
+        m_Handles = default;
+
         var mapData = GetSingleton<MapData>();
-        var initJob = new InitJob
-        {
-            Rocks = RockMap
-        }.Schedule(inputDeps);
+        if (RockMap.IsCreated) RockMap.Dispose();
+        RockMap = new NativeArray<Entity>(mapData.Width * mapData.Height, Allocator.TempJob);
 
         var createJob = new CreateRockDataJob
         {
             Width = mapData.Width,
             Rocks = RockMap
-        }.Schedule(this, initJob);
+        }.Schedule(this, inputDeps);
+
         createJob.Complete();
 
         return inputDeps;

@@ -38,7 +38,7 @@ public class SpawnRocksSystem : ComponentSystem
             PostUpdateCommands.RemoveComponent<RockSpawner>(e);
         });
 
-        World.GetOrCreateSystem<RockMapSystem>().RockMap = new NativeArray<Entity>(mapWidth * mapHeight, Allocator.Persistent);
+        // World.GetOrCreateSystem<RockMapSystem>().RockMap = new NativeArray<Entity>(mapWidth * mapHeight, Allocator.Persistent);
     }
 
     float GetRockStartingDepth(ref Random r) => r.NextFloat(.4f, .8f);

@@ -11,10 +11,12 @@ using static Unity.Mathematics.math;
 public class PathingSystem : JobComponentSystem
 {
     EndSimulationEntityCommandBufferSystem m_EntityCommandBufferSystem;
+    RockMapSystem m_RockMapSystem;
 
     protected override void OnCreate()
     {
         m_EntityCommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
+        m_RockMapSystem = World.GetOrCreateSystem<RockMapSystem>();
     }
 
     [BurstCompile]
@@ -404,16 +406,16 @@ public class PathingSystem : JobComponentSystem
         //     PlantCounts = plantCounts
         // }.Schedule(this, inputDeps);
 
-        var rocks = World.GetOrCreateSystem<RockMapSystem>().RockMap;
         var pathToRockHandle = new PathToRockJob
         {
             Width = mapData.Width,
             Height = mapData.Height,
             Range = 25,
-            Rocks = rocks,
+            Rocks = m_RockMapSystem.RockMap,
             EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
         }.Schedule(this, inputDeps);
         m_EntityCommandBufferSystem.AddJobHandleForProducer(pathToRockHandle);
+        m_RockMapSystem.AddJobHandleForProducer(pathToRockHandle);
 
         var landEntities = World.GetOrCreateSystem<SpawnFarmTilesSystem>().LandEntities;
         var pathToUntilledHandle = new PathToUntilledJob
@@ -421,12 +423,13 @@ public class PathingSystem : JobComponentSystem
             Width = mapData.Width,
             Height = mapData.Height,
             Range = 25,
-            Rocks = rocks,
+            Rocks = m_RockMapSystem.RockMap,
             LandEntities = landEntities,
             LandStates = GetComponentDataFromEntity<LandState>(),
             EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
         }.Schedule(this, inputDeps);
         m_EntityCommandBufferSystem.AddJobHandleForProducer(pathToUntilledHandle);
+        m_RockMapSystem.AddJobHandleForProducer(pathToUntilledHandle);
 
         // var combinedCreationHandles = createPlantDataHandle;
 
