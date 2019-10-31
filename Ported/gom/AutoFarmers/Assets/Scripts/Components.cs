@@ -72,10 +72,8 @@ public struct TargetEntity : IComponentData
 }
 
 
-public struct PlantGrowth : IComponentData
-{
-    public float Value;
-}
+public struct PlantGrowth : IComponentData { }
+
 public struct PrefabManager : IComponentData
 {
     public Entity DronePrefab;
