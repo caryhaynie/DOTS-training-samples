@@ -76,8 +76,8 @@ public struct PlantGrowth : IComponentData { }
 
 public struct PrefabManager : IComponentData
 {
-    public Entity DronePrefab;
     public Entity FarmerPrefab;
+    public Entity PlantPrefab;
     public Entity TilledPrefab;
 }
 
