@@ -442,8 +442,12 @@ public class PathingSystem : JobComponentSystem
             createRockDataHandle,
             createLandDataHandle);
 
+        var combinedPathingHandles = JobHandle.CombineDependencies(
+            pathToRockHandle,
+            pathToUntilledHandle);
+
         // Cleanup
-        var DeallocateJob = new DeallocateTempMapDataJob
+        var deallocateJob = new DeallocateTempMapDataJob
         {
             Rocks = rocks,
             Plants = plantCounts,
@@ -451,6 +455,6 @@ public class PathingSystem : JobComponentSystem
             LandEntities = landEntities,
         }.Schedule(JobHandle.CombineDependencies(combinedCreationHandles, pathToRockHandle));
 
-        return DeallocateJob;
+        return JobHandle.CombineDependencies(combinedCreationHandles, combinedPathingHandles);
     }
 }
