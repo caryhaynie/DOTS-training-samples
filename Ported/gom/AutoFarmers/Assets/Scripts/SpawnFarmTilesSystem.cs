@@ -11,6 +11,7 @@ public class SpawnFarmTilesSystem : ComponentSystem
                for (int height = 0; height < mapData.Height; height++)
                {
                    var entity = PostUpdateCommands.Instantiate(farmTileSpawner.Prefab);
+                   PostUpdateCommands.AddComponent<LandState>(entity, new LandState { Value = LandStateType.Untilled });
                    PostUpdateCommands.SetComponent<Translation>(entity, new Translation { Value = new float3(width, 0f, height) });
                }
            PostUpdateCommands.DestroyEntity(farmTileSpawner.Prefab);

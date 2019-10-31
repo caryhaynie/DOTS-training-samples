@@ -57,7 +57,6 @@ public struct TillGroundIntention : IComponentData { }
 public struct PlantSeedIntention : IComponentData { }
 public struct HarvestPlantIntention : IComponentData { }
 public struct SellPlantIntention : IComponentData { }
-
 public struct NeedGoal : IComponentData { }
 public struct NeedPath : IComponentData { }
 
@@ -65,6 +64,7 @@ public struct NeedPath : IComponentData { }
 
 public struct HasSeeds : IComponentData { }
 
+public struct Plant : IComponentData { }
 
 public struct TargetEntity : IComponentData
 {
@@ -76,3 +76,16 @@ public struct PlantGrowth : IComponentData
 {
     public float Value;
 }
+public struct PrefabManager : IComponentData
+{
+    public Entity DronePrefab;
+    public Entity FarmerPrefab;
+    //public Entity TilledPrefab;
+}
+
+public struct SpawnFarmer : IComponentData
+{
+    public int FarmerCount;
+}
+
+public struct Store : IComponentData {}
