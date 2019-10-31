@@ -1,4 +1,5 @@
 using Unity.Entities;
+using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Transforms;
 
@@ -7,7 +8,11 @@ public class SpawnRocksSystem : ComponentSystem
 {
     protected override void OnUpdate()
     {
+        int mapWidth = 0, mapHeight = 0;
         Entities.ForEach((Entity e, ref MapData map, ref RockSpawner rockSpawner) => {
+            mapWidth = map.Width;
+            mapHeight = map.Height;
+
             var random = new Random();
             random.InitState();
             for (int attempt = 0; attempt < rockSpawner.SpawnAttempts; attempt++)
@@ -32,6 +37,8 @@ public class SpawnRocksSystem : ComponentSystem
             PostUpdateCommands.DestroyEntity(rockSpawner.Prefab);
             PostUpdateCommands.RemoveComponent<RockSpawner>(e);
         });
+
+        // World.GetOrCreateSystem<RockMapSystem>().RockMap = new NativeArray<Entity>(mapWidth * mapHeight, Allocator.Persistent);
     }
 
     float GetRockStartingDepth(ref Random r) => r.NextFloat(.4f, .8f);
