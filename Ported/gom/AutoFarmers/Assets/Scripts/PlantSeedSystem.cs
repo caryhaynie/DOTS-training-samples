@@ -6,6 +6,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using static Unity.Mathematics.math;
 
+[UpdateInGroup(typeof(SimulateFarmGroup))]
 public class PlantSeedSystem : JobComponentSystem
 {
     EndSimulationEntityCommandBufferSystem m_EntityCommandBufferSystem;
@@ -18,7 +19,7 @@ public class PlantSeedSystem : JobComponentSystem
     // plant last seed in the path; TODO determine how we'll plant the other seeds WHILE moving, maybe a tag updated by the movement system?
     [BurstCompile]
     [ExcludeComponent(typeof(PathIndex))]
-    [RequireComponentTag(new[] { typeof(PlantSeedIntention), typeof(HasSeeds)})] 
+    [RequireComponentTag(new[] { typeof(PlantSeedIntention), typeof(HasSeeds)})]
     struct PlantLastSeedJob : IJobForEachWithEntity<Translation, TargetEntity>
     {
 
@@ -32,15 +33,15 @@ public class PlantSeedSystem : JobComponentSystem
         {
             Entity newPlant = EntityCommandBuffer.CreateEntity(index);
             EntityCommandBuffer.AddComponent(index, newPlant, position); // TODO probably want this somewhere different on the tile (e.g. the center)
-            EntityCommandBuffer.AddComponent<PlantGrowth>(index, newPlant); 
+            EntityCommandBuffer.AddComponent<PlantGrowth>(index, newPlant);
 
 
             EntityCommandBuffer.RemoveComponent<TargetEntity>(index, entity);
-            EntityCommandBuffer.RemoveComponent<PlantSeedIntention>(index, entity); 
+            EntityCommandBuffer.RemoveComponent<PlantSeedIntention>(index, entity);
 
         }
     }
-    
+
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
 

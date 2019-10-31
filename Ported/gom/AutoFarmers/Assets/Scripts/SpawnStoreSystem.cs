@@ -2,6 +2,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 
+[UpdateInGroup(typeof(SpawnGroup))]
 public class SpawnStoreSystem : ComponentSystem
 {
     protected override void OnUpdate()

@@ -2,6 +2,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 
+[UpdateInGroup(typeof(SpawnGroup))]
 public class SpawnFarmTilesSystem : ComponentSystem
 {
     protected override void OnUpdate()

@@ -6,6 +6,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using static Unity.Mathematics.math;
 
+[UpdateInGroup(typeof(SimulateFarmGroup))]
 public class RockSmashSystem : JobComponentSystem
 {
     EndSimulationEntityCommandBufferSystem m_EntityCommandBufferSystem;
@@ -76,7 +77,7 @@ public class RockSmashSystem : JobComponentSystem
             None = new ComponentType[] { typeof(PathElement) },
             All = new ComponentType[] { typeof(SmashRockIntention), typeof(TargetEntity) }
         });
-            
+
             //ComponentType.ReadOnly<SmashRockIntention>(), ComponentType.ReadOnly<TargetEntity>(), ComponentType.ReadOnly<PathElement>());
         NativeArray<Entity> EntityArray = new NativeArray<Entity>(SmashesQuery.CalculateEntityCount(), Allocator.TempJob);
 
@@ -96,7 +97,7 @@ public class RockSmashSystem : JobComponentSystem
 
         m_EntityCommandBufferSystem.AddJobHandleForProducer(HitRockJob);
 
-        // Now that the job is set up, schedule it to be run. 
+        // Now that the job is set up, schedule it to be run.
         return HitRockJob;
     }
 
@@ -244,7 +245,7 @@ public class RockSmashSystem : JobComponentSystem
 
     //    m_EntityCommandBufferSystem.AddJobHandleForProducer(SmashJobHandle);
 
-    //    // Now that the job is set up, schedule it to be run. 
+    //    // Now that the job is set up, schedule it to be run.
     //    return inputDependencies;
     //}
 
