@@ -42,7 +42,7 @@ public class FarmComponent : MonoBehaviour, IConvertGameObjectToEntity, IDeclare
         dstManager.AddComponentData(entity, farmTileSpawner);
         dstManager.AddComponentData(entity, rockSpawner);
         dstManager.AddComponentData(entity, mapData);
-        dstManager.AddComponentData(entity, new Farm());
+        dstManager.AddComponent<Farm>(entity);
     }
 
     public void DeclareReferencedPrefabs(List<GameObject> referencedPrefabs)
