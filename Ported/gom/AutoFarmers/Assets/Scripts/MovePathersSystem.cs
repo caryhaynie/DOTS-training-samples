@@ -48,7 +48,7 @@ public class MovePathersSystem : JobComponentSystem
 
                 // Check to see if we've reached the target tile
                 var currentTile = math.floor(position.Value.xz);
-                if (math.all(currentTile == targetTile) && pathIndex.Value < path.Length - 1)
+                if (math.all(currentTile == targetTile))
                 {
                     pathIndex.Value++;
                 }

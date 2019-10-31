@@ -18,6 +18,7 @@ public class TillingSystem : JobComponentSystem
             var landEntity = target.Value;
             var tilledEntity = ECB.Instantiate(jobIndex, TilledPrefab);
             ECB.AddComponent<Parent>(jobIndex, tilledEntity, new Parent { Value = landEntity });
+            ECB.AddComponent<LocalToParent>(jobIndex, tilledEntity);
             ECB.SetComponent<Translation>(jobIndex, tilledEntity, new Translation { Value = new float3(0.25f, 0.5f, 0.25f) });
             ECB.SetComponent<LandState>(jobIndex, landEntity, new LandState { Value = LandStateType.Tilled });
             ECB.RemoveComponent<TillGroundIntention>(jobIndex, farmerEntity);
