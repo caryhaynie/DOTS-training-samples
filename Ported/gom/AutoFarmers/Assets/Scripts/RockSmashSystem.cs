@@ -11,44 +11,24 @@ public class RockSmashSystem : JobComponentSystem
     [BurstCompile]
     [RequireComponentTag(typeof(SmashRockIntention))]
     [ExcludeComponent(typeof(PathElement))]
-    struct RockSmashSystemJob : IJob<TargetEntity>
+    struct RockSmashSystemJob : IJob
     {
         // Add fields here that your job needs to do its work.
         // For example,
         //    public float deltaTime;
         public EntityCommandBuffer.Concurrent EntityCommandBuffer;
 
-        public void Execute(
-            Entity entity,
-            int index,
-            DynamicBuffer<AttackerList> attackers,
-            [ReadOnly] ref BeingAttacked attackInformation,
-            ref RockHealth health
-            )
+        public void Execute()
         {
-            health.Value -= attackInformation.NumAttackers;
-
-            if (health.Value <= 0)
-            {
-                // Destroy the rock
-                EntityCommandBuffer.DestroyEntity(index, entity);
-
-                for (int i = 0; i < attackers.Length; i++)
-                {
-                    // Set worker to have no goal
-                    EntityCommandBuffer.RemoveComponent<SmashRockIntention>(index, attackers[i].Value);
-                    EntityCommandBuffer.RemoveComponent<SmashRockIntentionSmashing>(index, attackers[i].Value);
-                }
-            }
+            
         }
     }
 
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
-        var SmashJobHandle = new RockSmashSystemJob
-        {
-            EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
-        }.Schedule(this, inputDependencies);
+        var SmashJobHandle = new RockSmashSystemJob();
+            
+        SmashJobHandle.Schedule(inputDependencies);
 
         // Now that the job is set up, schedule it to be run. 
         return inputDependencies;
