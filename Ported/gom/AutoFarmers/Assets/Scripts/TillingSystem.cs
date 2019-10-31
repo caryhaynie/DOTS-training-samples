@@ -89,7 +89,8 @@ public class TillingSystem : JobComponentSystem
 
         var MarkToTillJob = new MarkToTill 
         {
-            EntityCommandBuffer = m_ECBSystem.CreateCommandBuffer().ToConcurrent()
+            EntityCommandBuffer = m_ECBSystem.CreateCommandBuffer().ToConcurrent(),
+            GroundToMarkToTill = EntityArray
         }.Schedule(BuildArrayJob);
 
         m_ECBSystem.AddJobHandleForProducer(MarkToTillJob);
