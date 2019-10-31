@@ -62,10 +62,7 @@ public struct NeedPath : IComponentData { }
 
 //public struct HoldingPlant : IComponentData { }
 
-public struct Plant : IComponentData 
-{
-}
-
+public struct HasSeeds : IComponentData { }
 
 
 public struct TargetEntity : IComponentData
