@@ -36,7 +36,7 @@ public class PlantSeedSystem : JobComponentSystem
 
             EntityCommandBuffer.AddComponent(index, newPlant, position); // TODO probably want this somewhere different on the tile (e.g. the center)
             EntityCommandBuffer.AddComponent<PlantGrowth>(index, newPlant);
-            EntityCommandBuffer.SetComponent(index, newPlant, new Scale { Value = 0 }); 
+            EntityCommandBuffer.AddComponent(index, newPlant, new Scale { Value = 0 });
 
 
             EntityCommandBuffer.RemoveComponent<TargetEntity>(index, entity);
