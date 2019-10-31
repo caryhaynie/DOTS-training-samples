@@ -26,7 +26,8 @@ public struct RockDimensions : IComponentData
 
 public struct RockHealth : IComponentData
 {
-    public int Value;
+    public int CurrentHealth;
+    public int MaxHealth;
 }
 
 // Goes on an entity with RockHealth.
