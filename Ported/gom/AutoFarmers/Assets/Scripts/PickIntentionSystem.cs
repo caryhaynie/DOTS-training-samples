@@ -4,6 +4,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
+using UnityEngine;
 using static Unity.Mathematics.math;
 
 public class PickIntentionSystem : JobComponentSystem
@@ -44,7 +45,7 @@ public class PickIntentionSystem : JobComponentSystem
 
         public void Execute(Entity entity,
             int index,
-            ref NeedGoal g)
+            [ReadOnly] ref NeedGoal g)
         {
 
             int randomNum = random.NextInt(0, 3);
@@ -76,10 +77,13 @@ public class PickIntentionSystem : JobComponentSystem
 
         var pickIntention = new PickIntentionJob
         {
-            EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
+            EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
+            random = new Unity.Mathematics.Random(1234)
 
         }.Schedule(this, inputDeps);
 
-        return inputDeps;
+        m_EntityCommandBufferSystem.AddJobHandleForProducer(pickIntention);
+
+        return pickIntention;
     }
 }
