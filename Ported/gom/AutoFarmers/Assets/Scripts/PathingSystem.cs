@@ -33,36 +33,6 @@ public class PathingSystem : JobComponentSystem
         }
     }
 
-    // [BurstCompile]
-    struct CreateRockDataJob : IJobForEachWithEntity<RockDimensions, Translation>
-    {
-        public int Width;
-
-        [NativeDisableContainerSafetyRestriction]
-        public NativeArray<Entity> Rocks;
-
-        public void Execute(
-            Entity entity,
-            int index,
-            [ReadOnly] ref RockDimensions dimensions,
-            [ReadOnly] ref Translation position)
-        {
-            var tile = new int2(math.floor(position.Value.xz));
-            var startIndex = tile.y * Width + tile.x;
-            var rockWidth = dimensions.Value.x;
-            var rockHeight = dimensions.Value.y;
-            for (var y = 0; y < rockHeight; ++y)
-            {
-                var endIndex = startIndex + rockWidth;
-                for (var i = startIndex; i < endIndex; ++i)
-                {
-                    Rocks[i] = entity;
-                }
-                startIndex += Width;
-            }
-        }
-    }
-
     [BurstCompile]
     struct CreateLandDataJob : IJobForEachWithEntity<Translation, LandState>
     {
@@ -271,9 +241,6 @@ public class PathingSystem : JobComponentSystem
     struct DeallocateTempMapDataJob : IJob
     {
         [DeallocateOnJobCompletion]
-        public NativeArray<Entity> Rocks;
-
-        [DeallocateOnJobCompletion]
         public NativeArray<int> Plants;
 
         public void Execute() { }
@@ -424,28 +391,22 @@ public class PathingSystem : JobComponentSystem
         var mapData = GetSingleton<MapData>();
         var tileCount = mapData.Width * mapData.Height;
 
-        var plantCounts = new NativeArray<int>(tileCount, Allocator.TempJob);
-        var createPlantDataHandle = new CreatePlantDataJob
-        {
-            Width = mapData.Width,
-            PlantCounts = plantCounts
-        }.Schedule(this, inputDeps);
+        // var plantCounts = new NativeArray<int>(tileCount, Allocator.TempJob);
+        // var createPlantDataHandle = new CreatePlantDataJob
+        // {
+        //     Width = mapData.Width,
+        //     PlantCounts = plantCounts
+        // }.Schedule(this, inputDeps);
 
-        var rocks = new NativeArray<Entity>(tileCount, Allocator.TempJob);
-        var createRockDataHandle = new CreateRockDataJob
-        {
-            Width = mapData.Width,
-            Rocks = rocks
-        }.Schedule(this, inputDeps);
-
+        // JobHandle pathToRockHandle = default;
         var pathToRockHandle = new PathToRockJob
         {
             Width = mapData.Width,
             Height = mapData.Height,
             Range = 25,
-            Rocks = rocks,
+            Rocks = World.GetOrCreateSystem<RockMapSystem>().RockMap,
             EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
-        }.Schedule(this, createRockDataHandle);
+        }.Schedule(this, inputDeps);
         m_EntityCommandBufferSystem.AddJobHandleForProducer(pathToRockHandle);
 
         // var pathToUntilledHandle = new PathToUntilledJob
@@ -460,23 +421,22 @@ public class PathingSystem : JobComponentSystem
         // }.Schedule(this, JobHandle.CombineDependencies(createPlantDataHandle, createRockDataHandle));
         // m_EntityCommandBufferSystem.AddJobHandleForProducer(pathToUntilledHandle);
 
-        var combinedCreationHandles = JobHandle.CombineDependencies(
-            createPlantDataHandle,
-            createRockDataHandle);
+        // var combinedCreationHandles = createPlantDataHandle;
 
         // var combinedPathingHandles = JobHandle.CombineDependencies(
         //     pathToRockHandle,
         //     pathToUntilledHandle);
 
         // Cleanup
-        var deallocateJob = new DeallocateTempMapDataJob
-        {
-            Rocks = rocks,
-            Plants = plantCounts,
-        // }.Schedule(JobHandle.CombineDependencies(combinedCreationHandles, combinedPathingHandles));
-        }.Schedule(JobHandle.CombineDependencies(combinedCreationHandles, pathToRockHandle));
+        // var deallocateJob = new DeallocateTempMapDataJob
+        // {
+        //     Plants = plantCounts,
+        // // }.Schedule(JobHandle.CombineDependencies(combinedCreationHandles, combinedPathingHandles));
+        // }.Schedule(JobHandle.CombineDependencies(combinedCreationHandles, pathToRockHandle));
 
+        pathToRockHandle.Complete();
         // return combinedPathingHandles;
-        return JobHandle.CombineDependencies(combinedCreationHandles, pathToRockHandle);
+        // return pathToRockHandle;
+        return inputDeps;
     }
 }
