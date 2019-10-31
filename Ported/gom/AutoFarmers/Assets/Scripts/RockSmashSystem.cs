@@ -36,6 +36,7 @@ public class RockSmashSystem : JobComponentSystem
         public NativeArray<Entity> AttackedRocks;
 
         public ComponentDataFromEntity<RockHealth> RockHealths;
+        public ComponentDataFromEntity<Translation> RockTranslations;
         public EntityCommandBuffer.Concurrent EntityCommandBuffer;
 
         public void Execute()
@@ -44,10 +45,15 @@ public class RockSmashSystem : JobComponentSystem
             {
                 if (entity != Entity.Null)
                 {
-                    var health = RockHealths[entity].Value;
-                    health -= 1;
-                    RockHealths[entity] = new RockHealth { Value = health };
-                    if (health <= 0)
+                    var health = RockHealths[entity];
+                    health.CurrentHealth -= 1;
+                    RockHealths[entity] = new RockHealth { CurrentHealth = health.CurrentHealth, MaxHealth = health.MaxHealth };
+
+                    // "Animate" the rock moving downward
+                    var incomingTranslation = RockTranslations[entity];
+                    RockTranslations[entity] = new Translation { Value = new float3(incomingTranslation.Value.x, -0.5f + (health.CurrentHealth / health.MaxHealth), incomingTranslation.Value.z) };
+
+                    if (health.CurrentHealth <= 0)
                     {
                         EntityCommandBuffer.DestroyEntity(0, entity);
                     }
@@ -76,6 +82,7 @@ public class RockSmashSystem : JobComponentSystem
         {
             EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
             RockHealths = new ComponentDataFromEntity<RockHealth>(),
+            RockTranslations = new ComponentDataFromEntity<Translation>(),
             AttackedRocks = EntityArray
         }.Schedule(BuildArrayJob);
 

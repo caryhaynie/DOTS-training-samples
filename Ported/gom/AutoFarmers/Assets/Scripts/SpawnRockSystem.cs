@@ -23,8 +23,10 @@ public class SpawnRocksSystem : ComponentSystem
 
                 var entity = PostUpdateCommands.Instantiate(rockSpawner.Prefab);
                 PostUpdateCommands.AddComponent<RockDimensions>(entity, new RockDimensions { Value = new int2(rockX, rockY) });
-                PostUpdateCommands.AddComponent<RockHealth>(entity, new RockHealth { Value = GetRockStartingHealth(width, height) });
-                PostUpdateCommands.SetComponent<Translation>(entity, new Translation { Value = new float3(rockX, GetRockStartingDepth(ref random), rockY) });
+                var StartHealth = GetRockStartingHealth(width, height);
+                PostUpdateCommands.AddComponent<RockHealth>(entity, new RockHealth { CurrentHealth = StartHealth, MaxHealth = StartHealth });
+                //PostUpdateCommands.SetComponent<Translation>(entity, new Translation { Value = new float3(rockX, GetRockStartingDepth(ref random), rockY) });
+                PostUpdateCommands.SetComponent<Translation>(entity, new Translation { Value = new float3(rockX, 0.5f, rockY) }); // setting to standard height to make animations easy
                 PostUpdateCommands.AddComponent<NonUniformScale>(entity, new NonUniformScale { Value = new float3 (width, 1f, height) });
                 PostUpdateCommands.RemoveComponent<Scale>(entity);
             }
