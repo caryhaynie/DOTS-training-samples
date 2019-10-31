@@ -26,7 +26,18 @@ public struct RockDimensions : IComponentData
 
 public struct RockHealth : IComponentData
 {
-    public float Value;
+    public int Value;
+}
+
+// Goes on an entity with RockHealth.
+public struct BeingAttacked : IComponentData
+{
+    public int NumAttackers;
+}
+
+public struct AttackerList : IBufferElementData
+{
+    public Entity Value;
 }
 
 public enum LandStateType : byte
@@ -41,3 +52,4 @@ public struct LandState : IComponentData
 }
 
 public struct SmashRockIntention : IComponentData {}
+public struct SmashRockIntentionSmashing : IComponentData {}
