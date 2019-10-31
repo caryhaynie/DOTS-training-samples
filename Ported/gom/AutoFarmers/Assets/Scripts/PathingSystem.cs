@@ -157,11 +157,13 @@ public class PathingSystem : JobComponentSystem
             }
         }
 
-        public static DynamicBuffer<PathElement> AddPathToEntity(EntityCommandBuffer.Concurrent entityCommandBuffer, int index, Entity entity)
+        public static void AddPathToEntity(
+            EntityCommandBuffer.Concurrent entityCommandBuffer, int jobIndex, Entity entity,
+            int endTileIndex, int width, NativeArray<int2> prev)
         {
-            entityCommandBuffer.RemoveComponent<NeedPath>(index, entity);
-            entityCommandBuffer.AddComponent(index, entity, new PathIndex{ Value = 0 });
-            return entityCommandBuffer.AddBuffer<PathElement>(index, entity);
+            entityCommandBuffer.AddComponent(jobIndex, entity, new PathIndex{ Value = 0 });
+            var path = entityCommandBuffer.AddBuffer<PathElement>(jobIndex, entity);
+            ConstructPath(endTileIndex, width, prev, path);
         }
 
         public static int MarkVisitedAndGetNextDistance(NativeArray<int> distances, int index)
@@ -209,9 +211,10 @@ public class PathingSystem : JobComponentSystem
             int index,
             [ReadOnly] ref Translation position)
         {
+            EntityCommandBuffer.RemoveComponent<NeedPath>(index, entity);
             Utils.Init(Width, Height, position.Value, out NativeArray<int> distances, out NativeArray<int2> prev, out PQueue queue, out int steps);
-            var path = Utils.AddPathToEntity(EntityCommandBuffer, index, entity);
             int tileIndex = 0;
+            bool hasPath = false;
 
             while (queue.Length > 0 && steps < Range)
             {
@@ -222,6 +225,7 @@ public class PathingSystem : JobComponentSystem
                 if (rock != Entity.Null)
                 {
                     EntityCommandBuffer.AddComponent(index, entity, new TargetEntity{ Value = rock });
+                    hasPath = true;
                     break;
                 }
 
@@ -233,7 +237,15 @@ public class PathingSystem : JobComponentSystem
                 if (tile.y - 1 > 0) Consider(tile, new int2(0, -1), steps, ref queue, distances, prev);
             }
 
-            Utils.ConstructPath(tileIndex, Width, prev, path);
+            if (hasPath)
+            {
+                Utils.AddPathToEntity(EntityCommandBuffer, index, entity, tileIndex, Width, prev);
+            }
+            else
+            {
+                EntityCommandBuffer.RemoveComponent<SmashRockIntention>(index, entity);
+                EntityCommandBuffer.AddComponent<NeedGoal>(index, entity);
+            }
 
             distances.Dispose();
             queue.Dispose();
@@ -293,9 +305,10 @@ public class PathingSystem : JobComponentSystem
             int index,
             [ReadOnly] ref Translation position)
         {
+            EntityCommandBuffer.RemoveComponent<NeedPath>(index, entity);
             Utils.Init(Width, Height, position.Value, out NativeArray<int> distances, out NativeArray<int2> prev, out PQueue queue, out int steps);
-            var path = Utils.AddPathToEntity(EntityCommandBuffer, index, entity);
             int tileIndex = 0;
+            bool hasPath = false;
 
             while (queue.Length > 0 && steps < Range)
             {
@@ -306,6 +319,7 @@ public class PathingSystem : JobComponentSystem
                 if (landEntity != Entity.Null && LandStates[landEntity].Value == LandStateType.Untilled)
                 {
                     EntityCommandBuffer.AddComponent(index, entity, new TargetEntity { Value = landEntity });
+                    hasPath = true;
                     break;
                 }
 
@@ -317,7 +331,15 @@ public class PathingSystem : JobComponentSystem
                 if (tile.y - 1 > 0) Consider(tile, new int2(0, -1), steps, ref queue, distances, prev);
             }
 
-            Utils.ConstructPath(tileIndex, Width, prev, path);
+            if (hasPath)
+            {
+                Utils.AddPathToEntity(EntityCommandBuffer, index, entity, tileIndex, Width, prev);
+            }
+            else
+            {
+                EntityCommandBuffer.RemoveComponent<TillGroundIntention>(index, entity);
+                EntityCommandBuffer.AddComponent<NeedGoal>(index, entity);
+            }
 
             distances.Dispose();
             queue.Dispose();
@@ -366,32 +388,7 @@ public class PathingSystem : JobComponentSystem
             int index,
             [ReadOnly] ref Translation position)
         {
-            return;
-            var path = Utils.AddPathToEntity(EntityCommandBuffer, index, entity);
-            Utils.Init(Width, Height, position.Value, out NativeArray<int> distances, out NativeArray<int2> prev, out PQueue queue, out int steps);
-
-            while (queue.Length > 0 && steps < Range)
-            {
-                var tile = queue.Dequeue();
-                path.Add(new PathElement{ Value = tile });
-
-                var tileIndex = GetTileIndex(tile.x, tile.y);
-                if (Land[index] == LandStateType.Untilled)
-                {
-                    EntityCommandBuffer.AddComponent(index, entity, new TargetEntity { Value = LandEntities[index] });
-                    break;
-                }
-
-                steps = Utils.MarkVisitedAndGetNextDistance(distances, tileIndex);
-
-                if (tile.x + 1 < Width - 1) Consider(tile.x + 1, tile.y, steps, ref queue, distances);
-                if (tile.x - 1 > 0) Consider(tile.x - 1, tile.y, steps, ref queue, distances);
-                if (tile.y + 1 < Height - 1) Consider(tile.x, tile.y + 1, steps, ref queue, distances);
-                if (tile.y - 1 > 0) Consider(tile.x, tile.y - 1, steps, ref queue, distances);
-            }
-
-            distances.Dispose();
-            queue.Dispose();
+            // TODO
         }
     }
 
