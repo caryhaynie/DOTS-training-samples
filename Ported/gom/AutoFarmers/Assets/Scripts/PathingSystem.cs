@@ -170,7 +170,7 @@ public class PathingSystem : JobComponentSystem
         }
     }
 
-    [BurstCompile]
+    // [BurstCompile]
     [ExcludeComponent(typeof(PathElement))]
     [RequireComponentTag(typeof(SmashRockIntention))]
     struct PathToRockJob : IJobForEachWithEntity<Translation>
@@ -252,7 +252,7 @@ public class PathingSystem : JobComponentSystem
         public void Execute() { }
     }
 
-    [BurstCompile]
+    // [BurstCompile]
     [ExcludeComponent(typeof(PathElement))]
     [RequireComponentTag(typeof(TillGroundIntention))]
     struct PathToUntilledJob : IJobForEachWithEntity<Translation>
@@ -293,6 +293,7 @@ public class PathingSystem : JobComponentSystem
             int index,
             [ReadOnly] ref Translation position)
         {
+            return;
             var path = Utils.AddPathToEntity(EntityCommandBuffer, index, entity);
             Utils.Init(Width, Height, position.Value, out NativeArray<int> distances, out PQueue queue, out int steps);
 
@@ -321,7 +322,7 @@ public class PathingSystem : JobComponentSystem
         }
     }
 
-    [BurstCompile]
+    // [BurstCompile]
     [ExcludeComponent(typeof(PathElement))]
     [RequireComponentTag(typeof(HasSeeds), typeof(PlantSeedIntention))]
     struct PathToTilledJob : IJobForEachWithEntity<Translation>
@@ -362,6 +363,7 @@ public class PathingSystem : JobComponentSystem
             int index,
             [ReadOnly] ref Translation position)
         {
+            return;
             var path = Utils.AddPathToEntity(EntityCommandBuffer, index, entity);
             Utils.Init(Width, Height, position.Value, out NativeArray<int> distances, out PQueue queue, out int steps);
 
@@ -426,26 +428,28 @@ public class PathingSystem : JobComponentSystem
             Rocks = rocks,
             EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
         }.Schedule(this, createRockDataHandle);
+        m_EntityCommandBufferSystem.AddJobHandleForProducer(pathToRockHandle);
 
-        var pathToUntilledHandle = new PathToUntilledJob
-        {
-            Width = mapData.Width,
-            Height = mapData.Height,
-            Range = 25,
-            Rocks = rocks,
-            Land = land,
-            LandEntities = landEntities,
-            EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
-        }.Schedule(this, JobHandle.CombineDependencies(createPlantDataHandle, createRockDataHandle));
+        // var pathToUntilledHandle = new PathToUntilledJob
+        // {
+        //     Width = mapData.Width,
+        //     Height = mapData.Height,
+        //     Range = 25,
+        //     Rocks = rocks,
+        //     Land = land,
+        //     LandEntities = landEntities,
+        //     EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
+        // }.Schedule(this, JobHandle.CombineDependencies(createPlantDataHandle, createRockDataHandle));
+        // m_EntityCommandBufferSystem.AddJobHandleForProducer(pathToUntilledHandle);
 
         var combinedCreationHandles = JobHandle.CombineDependencies(
             createPlantDataHandle,
             createRockDataHandle,
             createLandDataHandle);
 
-        var combinedPathingHandles = JobHandle.CombineDependencies(
-            pathToRockHandle,
-            pathToUntilledHandle);
+        // var combinedPathingHandles = JobHandle.CombineDependencies(
+        //     pathToRockHandle,
+        //     pathToUntilledHandle);
 
         // Cleanup
         var deallocateJob = new DeallocateTempMapDataJob
@@ -454,8 +458,10 @@ public class PathingSystem : JobComponentSystem
             Plants = plantCounts,
             Land = land,
             LandEntities = landEntities,
+        // }.Schedule(JobHandle.CombineDependencies(combinedCreationHandles, combinedPathingHandles));
         }.Schedule(JobHandle.CombineDependencies(combinedCreationHandles, pathToRockHandle));
 
-        return JobHandle.CombineDependencies(combinedCreationHandles, combinedPathingHandles);
+        // return combinedPathingHandles;
+        return JobHandle.CombineDependencies(combinedCreationHandles, pathToRockHandle);
     }
 }
