@@ -12,6 +12,7 @@ public class RockSmashSystem : JobComponentSystem
 
     [BurstCompile]
     [RequireComponentTag(typeof(SmashRockIntention))]
+    [ExcludeComponent(typeof(PathElement))]
     struct BuildSmashArray : IJobForEachWithEntity<TargetEntity>
     {
         public NativeArray<Entity> AttackedRocks;
