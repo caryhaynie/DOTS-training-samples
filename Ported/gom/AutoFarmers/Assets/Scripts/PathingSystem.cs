@@ -144,7 +144,7 @@ public class PathingSystem : JobComponentSystem
         {
             int mapSize = width * height;
             distances = new NativeArray<int>(mapSize, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
-            var minValue = int.MinValue;
+            var minValue = int.MinValue + 1;
             UnsafeUtility.MemCpyReplicate(distances.GetUnsafePtr(), UnsafeUtility.AddressOf(ref minValue), 4, distances.Length);
 
             int2 currentTile = new int2(math.floor(worldPosition.xz));
