@@ -48,7 +48,7 @@ public class PickIntentionSystem : JobComponentSystem
             [ReadOnly] ref NeedGoal g)
         {
 
-            int randomNum = random.NextInt(0, 3);
+            int randomNum = random.NextInt(0, 4); // not inclusive
 
             if (randomNum == 0)
                 EntityCommandBuffer.AddComponent<SmashRockIntention>(index, entity);
@@ -56,10 +56,10 @@ public class PickIntentionSystem : JobComponentSystem
                 EntityCommandBuffer.AddComponent<TillGroundIntention>(index, entity);
             if (randomNum == 2)
                 EntityCommandBuffer.AddComponent<PlantSeedIntention>(index, entity);
-            else
+            if (randomNum == 3)
                 EntityCommandBuffer.AddComponent<HarvestPlantIntention>(index, entity);
 
-            EntityCommandBuffer.AddComponent<NeedPath>(index, entity);
+            EntityCommandBuffer.RemoveComponent<NeedPath>(index, entity);
             EntityCommandBuffer.RemoveComponent<NeedGoal>(index, entity);
 
 
