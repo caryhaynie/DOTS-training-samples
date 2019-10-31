@@ -45,7 +45,7 @@ public class RockSmashSystem : JobComponentSystem
         {
             foreach (var entity in AttackedRocks)
             {
-                if (entity != Entity.Null)
+                if (RockHealths.Exists(entity))
                 {
                     var health = RockHealths[entity];
                     health.CurrentHealth -= 1;
