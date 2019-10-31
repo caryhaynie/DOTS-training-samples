@@ -23,6 +23,7 @@ public class PlantSeedSystem : JobComponentSystem
     {
 
         public EntityCommandBuffer.Concurrent EntityCommandBuffer;
+        public EntityCommandBuffer.Concurrent CommandBuffer;
 
 
         public void Execute(Entity entity,
@@ -31,13 +32,14 @@ public class PlantSeedSystem : JobComponentSystem
             ref TargetEntity target)
         {
             Entity newPlant = EntityCommandBuffer.CreateEntity(index);
+            // Entity newPlant = EntityCommandBuffer.Instantiate(index, plantSpawner.Prefab); // TODO create a plant prefab and use it
             EntityCommandBuffer.AddComponent(index, newPlant, position); // TODO probably want this somewhere different on the tile (e.g. the center)
-            EntityCommandBuffer.AddComponent<PlantGrowth>(index, newPlant); 
+            EntityCommandBuffer.AddComponent<PlantGrowth>(index, newPlant);
+            EntityCommandBuffer.SetComponent(index, newPlant, new Scale { Value = 0 }); 
 
 
             EntityCommandBuffer.RemoveComponent<TargetEntity>(index, entity);
             EntityCommandBuffer.RemoveComponent<PlantSeedIntention>(index, entity); 
-
         }
     }
     
