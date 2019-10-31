@@ -27,9 +27,9 @@ public struct StoreSpawner : IComponentData
 public class FarmComponent : MonoBehaviour, IConvertGameObjectToEntity, IDeclareReferencedPrefabs
 {
     public Vector2Int mapSize = new Vector2Int(64, 64);
-    public GameObject dronePrefab;
     public GameObject farmPrefab;
     public GameObject farmerPrefab;
+    public GameObject plantPrefab;
     public GameObject rockPrefab;
     public GameObject storePrefab;
     public GameObject tillPrefab;
@@ -54,8 +54,8 @@ public class FarmComponent : MonoBehaviour, IConvertGameObjectToEntity, IDeclare
             Height = mapSize.y
         };
         var prefabManager = new PrefabManager {
-            DronePrefab = conversionSystem.GetPrimaryEntity(dronePrefab),
             FarmerPrefab = conversionSystem.GetPrimaryEntity(farmerPrefab),
+            PlantPrefab = conversionSystem.GetPrimaryEntity(plantPrefab),
             TilledPrefab = conversionSystem.GetPrimaryEntity(tillPrefab)
         };
 
@@ -69,9 +69,9 @@ public class FarmComponent : MonoBehaviour, IConvertGameObjectToEntity, IDeclare
 
     public void DeclareReferencedPrefabs(List<GameObject> referencedPrefabs)
     {
-        referencedPrefabs.Add(dronePrefab);
         referencedPrefabs.Add(farmPrefab);
         referencedPrefabs.Add(farmerPrefab);
+        referencedPrefabs.Add(plantPrefab);
         referencedPrefabs.Add(rockPrefab);
         referencedPrefabs.Add(storePrefab);
         referencedPrefabs.Add(tillPrefab);

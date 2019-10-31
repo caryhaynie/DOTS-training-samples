@@ -2,15 +2,18 @@
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
-using Unity.Mathematics;
 using Unity.Transforms;
-using static Unity.Mathematics.math;
+
+public struct PlantGrowthSettings : IComponentData
+{
+    public float Scale;
+    public float Size;
+}
+
+public struct NeedsPlantMeshGeneration : IComponentData {}
 
 public class PlantGrowthSystem : JobComponentSystem
 {
-    public readonly static float growthScale = 0.1f;
-    public readonly static float grownSize = 3f;
-
     EndSimulationEntityCommandBufferSystem m_EntityCommandBufferSystem;
 
     protected override void OnCreate()
@@ -23,15 +26,16 @@ public class PlantGrowthSystem : JobComponentSystem
     struct PlantGrowthJob : IJobForEachWithEntity<Scale>
     {
         public EntityCommandBuffer.Concurrent EntityCommandBuffer;
+        public PlantGrowthSettings Settings;
 
         public void Execute(
             Entity entity,
             int index,
             ref Scale scale)
         {
-            scale.Value += growthScale;
+            scale.Value += Settings.Scale;
 
-            if (scale.Value > grownSize)
+            if (scale.Value > Settings.Size)
             {
                 EntityCommandBuffer.AddComponent<HarvestablePlant>(index, entity);
                 EntityCommandBuffer.RemoveComponent<PlantGrowth>(index, entity);
@@ -39,12 +43,15 @@ public class PlantGrowthSystem : JobComponentSystem
 
         }
     }
-    
+
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
+        var settings = GetSingleton<PlantGrowthSettings>();
+
         var growPlantJob = new PlantGrowthJob
         {
-            EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
+            EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
+            Settings = settings,
         }.Schedule(this, inputDependencies);
 
         m_EntityCommandBufferSystem.AddJobHandleForProducer(growPlantJob);
