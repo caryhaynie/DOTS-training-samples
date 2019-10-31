@@ -8,30 +8,78 @@ using static Unity.Mathematics.math;
 
 public class RockSmashSystem : JobComponentSystem
 {
+    EndSimulationEntityCommandBufferSystem m_EntityCommandBufferSystem;
+
     [BurstCompile]
     [RequireComponentTag(typeof(SmashRockIntention))]
-    [ExcludeComponent(typeof(PathElement))]
-    struct RockSmashSystemJob : IJob
+    struct BuildSmashArray : IJobForEachWithEntity<TargetEntity>
     {
-        // Add fields here that your job needs to do its work.
-        // For example,
-        //    public float deltaTime;
+        public NativeArray<Entity> AttackedRocks;
+        public EntityCommandBuffer.Concurrent EntityCommandBuffer;
+
+        public void Execute(Entity entity, int index, ref TargetEntity targetRock)
+        {
+            if (targetRock.Value == Entity.Null)
+            {
+                EntityCommandBuffer.RemoveComponent<SmashRockIntention>(index, entity);
+                EntityCommandBuffer.RemoveComponent<TargetEntity>(index, entity);
+            }
+            else
+                AttackedRocks[index] = targetRock.Value;
+        }
+    }
+
+    struct DecrementRockHealth : IJob
+    {
+        [ReadOnly]
+        [DeallocateOnJobCompletion]
+        public NativeArray<Entity> AttackedRocks;
+        public ComponentDataFromEntity<RockHealth> RockHealths;
         public EntityCommandBuffer.Concurrent EntityCommandBuffer;
 
         public void Execute()
         {
-            
+            foreach (var entity in AttackedRocks)
+            {
+                if (entity != Entity.Null)
+                {
+                    var health = RockHealths[entity].Value;
+                    health -= 1;
+                    RockHealths[entity] = new RockHealth { Value = health };
+                    if (health <= 0)
+                    {
+                        EntityCommandBuffer.DestroyEntity(0, entity);
+                    }
+                }
+            }
         }
+    }
+
+    protected override void OnCreate()
+    {
+        m_EntityCommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
     }
 
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
-        var SmashJobHandle = new RockSmashSystemJob();
-            
-        SmashJobHandle.Schedule(inputDependencies);
+        var SmashesQuery = GetEntityQuery(ComponentType.ReadOnly<SmashRockIntention>());
+        NativeArray<Entity> EntityArray = new NativeArray<Entity>(SmashesQuery.CalculateEntityCount(), Allocator.TempJob);
+
+        var BuildArrayJob = new BuildSmashArray
+        {
+            EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
+            AttackedRocks = EntityArray
+        }.Schedule(this, inputDependencies);
+
+        var HitRockJob = new DecrementRockHealth
+        {
+            EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
+        }.Schedule(BuildArrayJob);
+
+        m_EntityCommandBufferSystem.AddJobHandleForProducer(HitRockJob);
 
         // Now that the job is set up, schedule it to be run. 
-        return inputDependencies;
+        return HitRockJob;
     }
 
     //[BurstCompile]
