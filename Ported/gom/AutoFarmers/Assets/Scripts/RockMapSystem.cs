@@ -14,6 +14,8 @@ public class RockMapSystem : JobComponentSystem
 
     public NativeArray<Entity> RockMap;
 
+    public JobHandle Handle;
+
     protected override void OnCreate()
     {
         m_EntityCommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
@@ -81,14 +83,12 @@ public class RockMapSystem : JobComponentSystem
         if (RockMap.IsCreated) RockMap.Dispose();
         RockMap = new NativeArray<Entity>(mapData.Width * mapData.Height, Allocator.TempJob);
 
-        var createJob = new CreateRockDataJob
+        Handle = new CreateRockDataJob
         {
             Width = mapData.Width,
             Rocks = RockMap
         }.Schedule(this, inputDeps);
 
-        createJob.Complete();
-
-        return inputDeps;
+        return Handle;
     }
 }

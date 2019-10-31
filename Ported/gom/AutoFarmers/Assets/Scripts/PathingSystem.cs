@@ -413,7 +413,7 @@ public class PathingSystem : JobComponentSystem
             Range = 25,
             Rocks = m_RockMapSystem.RockMap,
             EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
-        }.Schedule(this, inputDeps);
+        }.Schedule(this, JobHandle.CombineDependencies(inputDeps, m_RockMapSystem.Handle));
         m_EntityCommandBufferSystem.AddJobHandleForProducer(pathToRockHandle);
         m_RockMapSystem.AddJobHandleForProducer(pathToRockHandle);
 
@@ -427,7 +427,7 @@ public class PathingSystem : JobComponentSystem
             LandEntities = landEntities,
             LandStates = GetComponentDataFromEntity<LandState>(),
             EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
-        }.Schedule(this, inputDeps);
+        }.Schedule(this, JobHandle.CombineDependencies(inputDeps, m_RockMapSystem.Handle));
         m_EntityCommandBufferSystem.AddJobHandleForProducer(pathToUntilledHandle);
         m_RockMapSystem.AddJobHandleForProducer(pathToUntilledHandle);
 
