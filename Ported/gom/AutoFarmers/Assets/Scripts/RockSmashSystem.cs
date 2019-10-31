@@ -23,6 +23,7 @@ public class RockSmashSystem : JobComponentSystem
             {
                 EntityCommandBuffer.RemoveComponent<SmashRockIntention>(index, entity);
                 EntityCommandBuffer.RemoveComponent<TargetEntity>(index, entity);
+                EntityCommandBuffer.AddComponent<NeedGoal>(index, entity);
             }
             else
                 AttackedRocks[index] = targetRock.Value;
