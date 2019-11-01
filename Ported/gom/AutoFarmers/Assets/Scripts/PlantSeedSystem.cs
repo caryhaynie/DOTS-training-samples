@@ -22,7 +22,6 @@ public class PlantSeedSystem : JobComponentSystem
     [RequireComponentTag(new[] { typeof(PlantSeedIntention), typeof(HasSeeds)})]
     struct PlantLastSeedJob : IJobForEachWithEntity<Translation, TargetEntity>
     {
-
         public EntityCommandBuffer.Concurrent EntityCommandBuffer;
         public Entity PlantPrefab;
         public Unity.Mathematics.Random Rng;
@@ -41,10 +40,9 @@ public class PlantSeedSystem : JobComponentSystem
             var rndRotation = quaternion.Euler(0, Rng.NextFloat(0, 2 * 3.141592f), 0);
             EntityCommandBuffer.SetComponent(index, newPlant, new Rotation { Value = rndRotation });
 
-
             EntityCommandBuffer.RemoveComponent<TargetEntity>(index, entity);
             EntityCommandBuffer.RemoveComponent<PlantSeedIntention>(index, entity);
-
+            EntityCommandBuffer.AddComponent<NeedGoal>(index, entity);
         }
     }
 
