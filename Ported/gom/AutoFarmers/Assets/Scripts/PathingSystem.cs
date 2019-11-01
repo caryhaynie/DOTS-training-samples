@@ -632,12 +632,17 @@ public class PathingSystem : JobComponentSystem
                 var tile = queue.Dequeue();
                 tileIndex = GetTileIndex(tile.x, tile.y);
 
-                int* ptr = (int*)PlantCounts.GetUnsafePtr() + tileIndex;
-                if (PlantEntities[tileIndex] != Entity.Null && Interlocked.Decrement(ref *ptr) == 0)
+                var plantEntity = PlantEntities[tileIndex];
+                if (plantEntity != Entity.Null)
                 {
-                    EntityCommandBuffer.AddComponent(index, entity, new TargetEntity { Value = PlantEntities[tileIndex] });
-                    hasPath = true;
-                    break;
+                    int* ptr = (int*)PlantCounts.GetUnsafePtr() + tileIndex;
+                    if (Interlocked.Decrement(ref *ptr) == 0)
+                    {
+                        EntityCommandBuffer.AddComponent(index, entity, new TargetEntity { Value = plantEntity });
+                        EntityCommandBuffer.RemoveComponent<HarvestablePlant>(index, plantEntity);
+                        hasPath = true;
+                        break;
+                    }
                 }
 
                 steps = Utils.MarkVisitedAndGetNextDistance(distances, tileIndex);
