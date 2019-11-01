@@ -26,45 +26,7 @@ public class TillingSystem : JobComponentSystem
         }
     }
 
-    [RequireComponentTag(typeof(TillGroundIntention))]
-    [ExcludeComponent(typeof(PathElement))]
-    struct BuildTillArray : IJobForEachWithEntity<TargetEntity>
-    {
-        public NativeArray<Entity> GroundToMarkToTill;
-        public EntityCommandBuffer.Concurrent EntityCommandBuffer;
-
-        public void Execute(Entity entity, int index, ref TargetEntity target)
-        {
-            if (target.Value == Entity.Null)
-            {
-                EntityCommandBuffer.RemoveComponent<TillGroundIntention>(index, entity);
-                EntityCommandBuffer.RemoveComponent<TargetEntity>(index, entity);
-                EntityCommandBuffer.AddComponent<NeedGoal>(index, entity);
-            }
-            else
-                GroundToMarkToTill[index] = target.Value;
-        }
-    }
-
-    // Don't Burst because ground can be tilled by multiple farmers, and we don't want write collisions
-    struct MarkToTill : IJob
-    {
-        [ReadOnly]
-        [DeallocateOnJobCompletion]
-        public NativeArray<Entity> GroundToMarkToTill;
-
-        public EntityCommandBuffer.Concurrent EntityCommandBuffer;
-
-        public void Execute()
-        {
-            foreach (var entity in GroundToMarkToTill)
-            {
-                EntityCommandBuffer.AddComponent<NeedsTilling>(0, entity);
-            }
-        }
-    }
-
-    private EndSimulationEntityCommandBufferSystem m_ECBSystem;
+    EndSimulationEntityCommandBufferSystem m_ECBSystem;
 
     protected override void OnCreate()
     {
