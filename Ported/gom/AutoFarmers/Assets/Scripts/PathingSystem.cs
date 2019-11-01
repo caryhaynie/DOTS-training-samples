@@ -493,6 +493,88 @@ public class PathingSystem : JobComponentSystem
         }
     }
 
+    [ExcludeComponent(typeof(PathElement))]
+    [RequireComponentTag(typeof(HoldingPlant), typeof(SellPlantIntention), typeof(NeedPath))]
+    struct PathToStoreSellPlantJob : IJobForEachWithEntity<Translation>
+    {
+        public int Width;
+        public int Height;
+        public int Range;
+
+        [ReadOnly]
+        public NativeArray<Entity> Rocks;
+
+        [ReadOnly]
+        public NativeArray<Entity> StoreEntities;
+
+        public EntityCommandBuffer.Concurrent EntityCommandBuffer;
+
+        int GetTileIndex(int tileX, int tileY) => tileY * Width + tileX;
+
+        void Consider(
+            int2 currentTile, int2 dir, int steps,
+            ref PQueue queue, NativeArray<int> distances, NativeArray<int2> prev)
+        {
+            int2 neighborTile = currentTile + dir;
+            int neighborIndex = GetTileIndex(neighborTile.x, neighborTile.y);
+
+            if (distances[neighborIndex] > 0 || Rocks[neighborIndex] != Entity.Null) return;
+
+            if (-distances[neighborIndex] > steps)
+            {
+                distances[neighborIndex] = -steps;
+                prev[neighborIndex] = currentTile;
+                queue.Enqueue(neighborTile, steps);
+            }
+        }
+
+        public unsafe void Execute(
+            Entity entity,
+            int index,
+            [ReadOnly] ref Translation position)
+        {
+            EntityCommandBuffer.RemoveComponent<NeedPath>(index, entity);
+            Utils.Init(Width, Height, position.Value, out NativeArray<int> distances, out NativeArray<int2> prev, out PQueue queue, out int steps);
+            int tileIndex = 0;
+            bool hasPath = false;
+
+            while (queue.Length > 0 && steps < Range)
+            {
+                var tile = queue.Dequeue();
+                tileIndex = GetTileIndex(tile.x, tile.y);
+
+                var storeEntity = StoreEntities[tileIndex];
+                if (storeEntity != Entity.Null)
+                {
+                    EntityCommandBuffer.AddComponent(index, entity, new TargetEntity { Value = storeEntity });
+                    hasPath = true;
+                    break;
+                }
+
+                steps = Utils.MarkVisitedAndGetNextDistance(distances, tileIndex);
+
+                if (tile.x + 1 < Width - 1) Consider(tile, new int2(1, 0), steps, ref queue, distances, prev);
+                if (tile.x - 1 > 0) Consider(tile, new int2(-1, 0), steps, ref queue, distances, prev);
+                if (tile.y + 1 < Height - 1) Consider(tile, new int2(0, 1), steps, ref queue, distances, prev);
+                if (tile.y - 1 > 0) Consider(tile, new int2(0, -1), steps, ref queue, distances, prev);
+            }
+
+            if (hasPath)
+            {
+                Utils.AddPathToEntity(EntityCommandBuffer, index, entity, tileIndex, Width, prev);
+            }
+            else
+            {
+                EntityCommandBuffer.RemoveComponent<SellPlantIntention>(index, entity);
+                EntityCommandBuffer.AddComponent<NeedGoal>(index, entity);
+            }
+
+            distances.Dispose();
+            queue.Dispose();
+            prev.Dispose();
+        }
+    }
+
     [ExcludeComponent(typeof(PathElement), typeof(HoldingPlant))]
     [RequireComponentTag(typeof(HarvestPlantIntention), typeof(NeedPath))]
     struct PathToPlantJob : IJobForEachWithEntity<Translation>
