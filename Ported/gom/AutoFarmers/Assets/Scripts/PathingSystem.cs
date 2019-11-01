@@ -21,6 +21,54 @@ public class PathingSystem : JobComponentSystem
     }
 
     [BurstCompile]
+    [RequireComponentTag(typeof(PlantSeedIntention))]
+    struct RemovePlantableDataJob : IJobForEachWithEntity<TargetEntity>
+    {
+        public int Width;
+
+        [ReadOnly] public ComponentDataFromEntity<LandState> LandStates;
+        [ReadOnly] public ComponentDataFromEntity<Translation> Positions;
+        [NativeDisableParallelForRestriction]
+        [WriteOnly] public NativeArray<int> PlantableCounts;
+
+        public void Execute(Entity entity, int index, ref TargetEntity target)
+        {
+            // Can't plant where another entity has planed to do so
+            var landEntity = target.Value;
+            if (LandStates.HasComponent(landEntity))
+            {
+                var position = Positions[landEntity];
+                PlantableCounts[Utils.GetTileIndex(Width, position.Value)] = 0;
+            }
+        }
+    }
+
+    [BurstCompile]
+    struct CreatePlantableDataJob : IJobForEachWithEntity<Translation, LandState>
+    {
+        public int Width;
+
+        [NativeDisableParallelForRestriction]
+        [ReadOnly] public NativeArray<int> PlantCounts;
+
+        [NativeDisableParallelForRestriction]
+        [WriteOnly] public NativeArray<int> PlantableCounts;
+
+        public void Execute(
+            Entity entity, int index,
+            [ReadOnly] ref Translation position,
+            [ReadOnly] ref LandState land)
+        {
+            var tile = new int2(math.floor(position.Value.xz));
+            var tileIndex = tile.y * Width + tile.x;
+            if (land.Value == LandStateType.Tilled && PlantCounts[tileIndex] == 0)
+            {
+                PlantableCounts[tileIndex] = 1;
+            }
+        }
+    }
+
+    [BurstCompile]
     [RequireComponentTag(typeof(HarvestablePlant))]
     struct CreatePlantDataJob : IJobForEachWithEntity<Translation>
     {
@@ -101,6 +149,12 @@ public class PathingSystem : JobComponentSystem
 
     struct Utils
     {
+        public static int GetTileIndex(int width, float3 position)
+        {
+            var tile = new int2(math.floor(position.xz));
+            return width * tile.y + tile.x;
+        }
+
         public static unsafe void Init(int width, int height, float3 worldPosition, out NativeArray<int> distances, out NativeArray<int2> prev, out PQueue queue, out int steps)
         {
             int mapSize = width * height;
@@ -341,6 +395,9 @@ public class PathingSystem : JobComponentSystem
         [ReadOnly]
         public ComponentDataFromEntity<LandState> LandStates;
 
+        [DeallocateOnJobCompletion]
+        public NativeArray<int> PlantableCounts;
+
         public EntityCommandBuffer.Concurrent EntityCommandBuffer;
 
         int GetTileIndex(int tileX, int tileY) =>  tileY * Width + tileX;
@@ -378,13 +435,15 @@ public class PathingSystem : JobComponentSystem
                 tileIndex = GetTileIndex(tile.x, tile.y);
 
                 var landEntity = LandEntities[tileIndex];
-                if (landEntity != Entity.Null && LandStates[landEntity].Value == LandStateType.Tilled)
-
                 if (landEntity != Entity.Null && LandStates.HasComponent(landEntity) && LandStates[landEntity].Value == LandStateType.Tilled)
                 {
-                    EntityCommandBuffer.AddComponent(index, entity, new TargetEntity { Value = landEntity });
-                    hasPath = true;
-                    break;
+                    int* ptr = (int*)PlantableCounts.GetUnsafePtr() + tileIndex;
+                    if (Interlocked.Decrement(ref *ptr) == 0)
+                    {
+                        EntityCommandBuffer.AddComponent(index, entity, new TargetEntity { Value = landEntity });
+                        hasPath = true;
+                        break;
+                    }
                 }
 
                 steps = Utils.MarkVisitedAndGetNextDistance(distances, tileIndex);
@@ -676,12 +735,28 @@ public class PathingSystem : JobComponentSystem
 
         var plantEntities = new NativeArray<Entity>(tileCount, Allocator.TempJob);
         var plantCounts = new NativeArray<int>(tileCount, Allocator.TempJob);
+        var plantableCounts = new NativeArray<int>(tileCount, Allocator.TempJob);
         var createPlantDataHandle = new CreatePlantDataJob
         {
             Width = mapData.Width,
             PlantCounts = plantCounts,
             PlantEntities = plantEntities,
         }.Schedule(this, inputDeps);
+
+        createPlantDataHandle = new CreatePlantableDataJob
+        {
+            Width = mapData.Width,
+            PlantCounts = plantCounts,
+            PlantableCounts = plantableCounts
+        }.Schedule(this, createPlantDataHandle);
+
+        createPlantDataHandle = new RemovePlantableDataJob
+        {
+            Width = mapData.Width,
+            PlantableCounts = plantableCounts,
+            LandStates = GetComponentDataFromEntity<LandState>(),
+            Positions = GetComponentDataFromEntity<Translation>()
+        }.Schedule(this, createPlantDataHandle);
 
         var pathToRockHandle = new PathToRockJob
         {
@@ -716,8 +791,9 @@ public class PathingSystem : JobComponentSystem
             Rocks = m_RockMapSystem.RockMap,
             LandEntities = landEntities,
             LandStates = GetComponentDataFromEntity<LandState>(),
+            PlantableCounts = plantableCounts,
             EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
-        }.Schedule(this, JobHandle.CombineDependencies(inputDeps, m_RockMapSystem.Handle));
+        }.Schedule(this, JobHandle.CombineDependencies(createPlantDataHandle, m_RockMapSystem.Handle));
         m_EntityCommandBufferSystem.AddJobHandleForProducer(pathToTillableHandle);
         m_RockMapSystem.AddJobHandleForProducer(pathToTillableHandle);
 
