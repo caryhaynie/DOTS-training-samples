@@ -20,21 +20,23 @@ public class PlantSeedSystem : JobComponentSystem
     [BurstCompile]
     [ExcludeComponent(typeof(PathIndex))]
     [RequireComponentTag(new[] { typeof(PlantSeedIntention), typeof(HasSeeds)})]
-    struct PlantLastSeedJob : IJobForEachWithEntity<Translation, TargetEntity>
+    struct PlantLastSeedJob : IJobForEachWithEntity<TargetEntity>
     {
         public EntityCommandBuffer.Concurrent EntityCommandBuffer;
         public Entity PlantPrefab;
         public Unity.Mathematics.Random Rng;
+        [ReadOnly]
+        public ComponentDataFromEntity<Translation> Translations;
 
         public void Execute(Entity entity,
             int index,
-            ref Translation position,
             ref TargetEntity target)
         {
             //Entity newPlant = EntityCommandBuffer.CreateEntity(index);
             Entity newPlant = EntityCommandBuffer.Instantiate(index, PlantPrefab);
+            float3 targetPos = Translations[target.Value].Value;
 
-            EntityCommandBuffer.AddComponent(index, newPlant, position); // TODO probably want this somewhere different on the tile (e.g. the center)
+            EntityCommandBuffer.AddComponent(index, newPlant, new Translation { Value = targetPos }); // TODO probably want this somewhere different on the tile (e.g. the center)
             EntityCommandBuffer.AddComponent<PlantGrowth>(index, newPlant);
             EntityCommandBuffer.AddComponent(index, newPlant, new Scale { Value = 0 });
             var rndRotation = quaternion.Euler(0, Rng.NextFloat(0, 2 * 3.141592f), 0);
@@ -54,6 +56,7 @@ public class PlantSeedSystem : JobComponentSystem
             EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
             PlantPrefab = GetSingleton<PrefabManager>().PlantPrefab,
             Rng = new Unity.Mathematics.Random((uint)UnityEngine.Random.Range(1, int.MaxValue)),
+            Translations = GetComponentDataFromEntity<Translation>(),
         }.Schedule(this, inputDependencies);
 
 
