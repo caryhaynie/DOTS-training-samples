@@ -19,7 +19,7 @@ public class PlantSeedSystem : JobComponentSystem
     // plant last seed in the path; TODO determine how we'll plant the other seeds WHILE moving, maybe a tag updated by the movement system?
     [BurstCompile]
     [ExcludeComponent(typeof(PathIndex))]
-    [RequireComponentTag(new[] { typeof(PlantSeedIntention), typeof(HasSeeds)})]
+    [RequireComponentTag(typeof(PlantSeedIntention), typeof(HasSeeds))]
     struct PlantLastSeedJob : IJobForEachWithEntity<TargetEntity>
     {
         public EntityCommandBuffer.Concurrent EntityCommandBuffer;
