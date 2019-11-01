@@ -726,6 +726,18 @@ public class PathingSystem : JobComponentSystem
         m_EntityCommandBufferSystem.AddJobHandleForProducer(pathToStoreHandle);
         m_RockMapSystem.AddJobHandleForProducer(pathToStoreHandle);
 
+        var pathToStoreSellPlantHandle = new PathToStoreSellPlantJob
+        {
+            Width = mapData.Width,
+            Height = mapData.Height,
+            Range = 25,
+            Rocks = m_RockMapSystem.RockMap,
+            StoreEntities = storeEntities,
+            EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
+        }.Schedule(this, JobHandle.CombineDependencies(inputDeps, m_RockMapSystem.Handle));
+        m_EntityCommandBufferSystem.AddJobHandleForProducer(pathToStoreSellPlantHandle);
+        m_RockMapSystem.AddJobHandleForProducer(pathToStoreSellPlantHandle);
+
         var pathToPlantHandle = new PathToPlantJob
         {
             Width = mapData.Width,
@@ -739,25 +751,15 @@ public class PathingSystem : JobComponentSystem
         m_EntityCommandBufferSystem.AddJobHandleForProducer(pathToStoreHandle);
         m_RockMapSystem.AddJobHandleForProducer(pathToStoreHandle);
 
-        var combinedPathingHandles = JobHandle.CombineDependencies(
-            pathToRockHandle,
-            pathToUntilledHandle,
-            pathToStoreHandle);
-
-        combinedPathingHandles = JobHandle.CombineDependencies(
-            combinedPathingHandles,
-            pathToTillableHandle,
-            pathToPlantHandle);
-
-        // Cleanup
-        // var deallocateJob = new DeallocateTempMapDataJob
-        // {
-        //     Plants = plantCounts,
-        // // }.Schedule(JobHandle.CombineDependencies(combinedCreationHandles, combinedPathingHandles));
-        // }.Schedule(JobHandle.CombineDependencies(combinedCreationHandles, pathToRockHandle));
-
-        // return combinedPathingHandles;
-        // return pathToRockHandle;
-        return combinedPathingHandles;
+        using (var pathHandles = new NativeList<JobHandle>(Allocator.Temp))
+        {
+            pathHandles.Add(pathToRockHandle);
+            pathHandles.Add(pathToUntilledHandle);
+            pathHandles.Add(pathToStoreHandle);
+            pathHandles.Add(pathToTillableHandle);
+            pathHandles.Add(pathToPlantHandle);
+            pathHandles.Add(pathToStoreSellPlantHandle);
+            return JobHandle.CombineDependencies(pathHandles.AsArray());
+        }
     }
 }
