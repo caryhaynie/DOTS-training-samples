@@ -27,14 +27,14 @@ public class HarvestPlantSystem : JobComponentSystem
             int index,
             ref TargetEntity target)
         {
+            var plantEntity = target.Value;
             EntityCommandBuffer.AddComponent<SellPlantIntention>(index, entity);
             EntityCommandBuffer.AddComponent<NeedPath>(index, entity);
-            EntityCommandBuffer.AddComponent<HoldingPlant>(index, entity);
+            EntityCommandBuffer.AddComponent(index, entity, new HoldingPlant { Value = plantEntity });
             EntityCommandBuffer.RemoveComponent<HarvestPlantIntention>(index, entity);
             EntityCommandBuffer.RemoveComponent<TargetEntity>(index, entity);
 
             // Parent plant to the farmer
-            var plantEntity = target.Value;
             EntityCommandBuffer.AddComponent(index, plantEntity, new Parent { Value = entity });
             EntityCommandBuffer.AddComponent<LocalToParent>(index, plantEntity);
             EntityCommandBuffer.SetComponent(index, plantEntity, new Translation { Value = new float3(0, 1.5f, 0) });

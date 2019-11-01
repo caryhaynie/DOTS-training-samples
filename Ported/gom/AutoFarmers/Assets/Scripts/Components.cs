@@ -60,7 +60,12 @@ public struct SellPlantIntention : IComponentData { }
 public struct NeedGoal : IComponentData { }
 public struct NeedPath : IComponentData { }
 
-public struct HoldingPlant : IComponentData { }
+public struct HoldingPlant : IComponentData
+{
+    public Entity Value;
+}
+
+public struct PlantDeath : IComponentData {}
 
 public struct HasSeeds : IComponentData { }
 

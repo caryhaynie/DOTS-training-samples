@@ -18,22 +18,26 @@ public class SellPlantSystem : JobComponentSystem
 
     [BurstCompile]
     [ExcludeComponent(typeof(PathIndex))]
-    [RequireComponentTag(typeof(SellPlantIntention), typeof(HoldingPlant))]
-    struct SellPlantJob : IJobForEachWithEntity<TargetEntity>
+    [RequireComponentTag(typeof(SellPlantIntention))]
+    struct SellPlantJob : IJobForEachWithEntity<TargetEntity, HoldingPlant>
     {
         public EntityCommandBuffer.Concurrent EntityCommandBuffer;
 
         public void Execute(Entity entity,
             int index,
-            ref TargetEntity target)
+            [ReadOnly] ref TargetEntity store,
+            [ReadOnly] ref HoldingPlant plant)
         {
             EntityCommandBuffer.RemoveComponent<SellPlantIntention>(index, entity);
             EntityCommandBuffer.RemoveComponent<HoldingPlant>(index, entity);
             EntityCommandBuffer.RemoveComponent<TargetEntity>(index, entity);
             EntityCommandBuffer.AddComponent<NeedGoal>(index, entity);
 
-            // do we need to un-parent plant to the farmer?
-            // EntityCommandBuffer.DestroyEntity(index, target.Value); // is target the store or a plant?
+            // Re-parent plant to store
+            EntityCommandBuffer.SetComponent(index, plant.Value, new Parent { Value = store.Value });
+            EntityCommandBuffer.SetComponent(index, plant.Value, new Translation { Value = new float3(.5f, 1, .5f) });
+            EntityCommandBuffer.AddComponent<PlantDeath>(index, plant.Value);
+            EntityCommandBuffer.AddComponent(index, plant.Value, new NonUniformScale { Value = new float3(1) });
         }
     }
 
