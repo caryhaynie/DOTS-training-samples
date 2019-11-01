@@ -18,7 +18,7 @@ public class SpawnStoreSystem : ComponentSystem
                 var entity = PostUpdateCommands.Instantiate(storeSpawner.Prefab);
                 PostUpdateCommands.AddComponent<Store>(entity);
                 PostUpdateCommands.SetComponent<Translation>(entity, new Translation { Value = new float3(storeX, 0f, storeY) });
-                if (i == 0) // TODO / HACK :: Move initial farmer creation somewhere else.
+                // if (i == 0) // TODO / HACK :: Move initial farmer creation somewhere else.
                 {
                     PostUpdateCommands.AddComponent<SpawnFarmer>(entity, new SpawnFarmer { FarmerCount = 1 });
                 }
