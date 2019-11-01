@@ -68,19 +68,20 @@ public class RockSmashSystem : JobComponentSystem
         }
     }
 
+    EntityQuery m_SmashesQuery;
+
     protected override void OnCreate()
     {
         m_EntityCommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
+        m_SmashesQuery = GetEntityQuery(new EntityQueryDesc {
+            None = new ComponentType[] { typeof(PathElement) },
+            All = new ComponentType[] { typeof(SmashRockIntention), typeof(TargetEntity) }
+        });
     }
 
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
-        var SmashesQuery = GetEntityQuery(new EntityQueryDesc {
-            None = new ComponentType[] { typeof(PathElement) },
-            All = new ComponentType[] { typeof(SmashRockIntention), typeof(TargetEntity) }
-        });
-
-        NativeArray<Entity> EntityArray = new NativeArray<Entity>(SmashesQuery.CalculateEntityCount(), Allocator.TempJob);
+        var EntityArray = new NativeArray<Entity>(m_SmashesQuery.CalculateEntityCount(), Allocator.TempJob);
 
         var BuildArrayJob = new BuildSmashArray
         {
