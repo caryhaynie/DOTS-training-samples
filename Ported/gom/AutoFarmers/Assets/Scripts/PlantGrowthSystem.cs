@@ -27,13 +27,14 @@ public class PlantGrowthSystem : JobComponentSystem
     {
         public EntityCommandBuffer.Concurrent EntityCommandBuffer;
         public PlantGrowthSettings Settings;
+        public float deltaTime;
 
         public void Execute(
             Entity entity,
             int index,
             ref Scale scale)
         {
-            scale.Value += Settings.Scale;
+            scale.Value += Settings.Scale * deltaTime;
 
             if (scale.Value > Settings.Size)
             {
@@ -53,6 +54,7 @@ public class PlantGrowthSystem : JobComponentSystem
         {
             EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
             Settings = settings,
+            deltaTime = Time.DeltaTime
         }.Schedule(this, inputDependencies);
 
         m_EntityCommandBufferSystem.AddJobHandleForProducer(growPlantJob);
