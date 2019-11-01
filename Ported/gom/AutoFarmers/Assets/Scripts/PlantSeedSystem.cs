@@ -4,7 +4,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
-using static Unity.Mathematics.math;
+// using static Unity.Mathematics.math;
 
 [UpdateInGroup(typeof(SimulateFarmGroup))]
 public class PlantSeedSystem : JobComponentSystem
@@ -25,6 +25,7 @@ public class PlantSeedSystem : JobComponentSystem
 
         public EntityCommandBuffer.Concurrent EntityCommandBuffer;
         public Entity PlantPrefab;
+        public Unity.Mathematics.Random Rng;
 
         public void Execute(Entity entity,
             int index,
@@ -37,10 +38,12 @@ public class PlantSeedSystem : JobComponentSystem
             EntityCommandBuffer.AddComponent(index, newPlant, position); // TODO probably want this somewhere different on the tile (e.g. the center)
             EntityCommandBuffer.AddComponent<PlantGrowth>(index, newPlant);
             EntityCommandBuffer.AddComponent(index, newPlant, new Scale { Value = 0 });
+            var rndRotation = quaternion.Euler(0, Rng.NextFloat(0, 2 * 3.141592f), 0);
+            EntityCommandBuffer.SetComponent(index, newPlant, new Rotation { Value = rndRotation });
 
 
             EntityCommandBuffer.RemoveComponent<TargetEntity>(index, entity);
-            EntityCommandBuffer.RemoveComponent<PlantSeedIntention>(index, entity); 
+            EntityCommandBuffer.RemoveComponent<PlantSeedIntention>(index, entity);
 
         }
     }
@@ -51,8 +54,8 @@ public class PlantSeedSystem : JobComponentSystem
         var plantLastSeedJob = new PlantLastSeedJob
         {
             EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
-            PlantPrefab = GetSingleton<PrefabManager>().PlantPrefab
-
+            PlantPrefab = GetSingleton<PrefabManager>().PlantPrefab,
+            Rng = new Unity.Mathematics.Random((uint)UnityEngine.Random.Range(1, int.MaxValue)),
         }.Schedule(this, inputDependencies);
 
 
