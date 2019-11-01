@@ -43,30 +43,6 @@ public class PathingSystem : JobComponentSystem
         }
     }
 
-    [BurstCompile]
-    struct CreateLandDataJob : IJobForEachWithEntity<Translation, LandState>
-    {
-        public int Width;
-
-        [NativeDisableContainerSafetyRestriction]
-        public NativeArray<LandStateType> Land;
-
-        [NativeDisableContainerSafetyRestriction]
-        public NativeArray<Entity> LandEntities;
-
-        public void Execute(
-            Entity entity,
-            int index,
-            [ReadOnly] ref Translation position,
-            [ReadOnly] ref LandState landState)
-        {
-            var tile = new int2(math.floor(position.Value.xz));
-            var tileIndex = tile.y * Width + tile.x;
-            Land[tileIndex] = landState.Value;
-            LandEntities[tileIndex] = entity;
-        }
-    }
-
     struct PQueue
     {
         int m_Capacity;
@@ -259,14 +235,6 @@ public class PathingSystem : JobComponentSystem
             queue.Dispose();
             prev.Dispose();
         }
-    }
-
-    struct DeallocateTempMapDataJob : IJob
-    {
-        [DeallocateOnJobCompletion]
-        public NativeArray<int> Plants;
-
-        public void Execute() { }
     }
 
     [BurstCompile]
