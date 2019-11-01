@@ -10,10 +10,17 @@ using static Unity.Mathematics.math;
 public class SellPlantSystem : JobComponentSystem
 {
     EndSimulationEntityCommandBufferSystem m_EntityCommandBufferSystem;
+    EntityQuery m_SellersQuery;
+    int m_Money;
 
     protected override void OnCreate()
     {
         m_EntityCommandBufferSystem = World.GetOrCreateSystem<EndSimulationEntityCommandBufferSystem>();
+        m_SellersQuery = GetEntityQuery(new EntityQueryDesc
+        {
+            None = new ComponentType[] { typeof(PathIndex) },
+            All = new ComponentType[] { typeof(SellPlantIntention), typeof(TargetEntity), typeof(HoldingPlant) }
+        });
     }
 
     [BurstCompile]
@@ -41,6 +48,23 @@ public class SellPlantSystem : JobComponentSystem
         }
     }
 
+    struct SpawnFarmersJob : IJob
+    {
+        public Entity Prefab;
+        public int Count;
+        public EntityCommandBuffer EntityCommandBuffer;
+        public float3 Position;
+
+        public void Execute()
+        {
+            while (Count-- > 0)
+            {
+                var farmer = EntityCommandBuffer.Instantiate(Prefab);
+                EntityCommandBuffer.SetComponent(farmer, new Translation{ Value = Position });
+            }
+        }
+    }
+
     protected override JobHandle OnUpdate(JobHandle inputDependencies)
     {
         var job = new SellPlantJob
@@ -49,6 +73,22 @@ public class SellPlantSystem : JobComponentSystem
         }.Schedule(this, inputDependencies);
 
         m_EntityCommandBufferSystem.AddJobHandleForProducer(job);
+
+        m_Money += m_SellersQuery.CalculateEntityCount();
+
+        if (m_Money > 50)
+        {
+            var spawnHandle = new SpawnFarmersJob
+            {
+                Position = new float3(0),
+                Prefab = GetSingleton<PrefabManager>().FarmerPrefab,
+                Count = m_Money / 50,
+                EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer()
+            }.Schedule(job);
+            m_Money -= (m_Money / 50) * 50;
+            m_EntityCommandBufferSystem.AddJobHandleForProducer(spawnHandle);
+            job = JobHandle.CombineDependencies(spawnHandle, job);
+        }
 
         return job;
     }
