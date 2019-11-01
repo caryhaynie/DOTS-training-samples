@@ -27,16 +27,13 @@ public class SellPlantSystem : JobComponentSystem
             int index,
             ref TargetEntity target)
         {
-
             EntityCommandBuffer.RemoveComponent<SellPlantIntention>(index, entity);
             EntityCommandBuffer.RemoveComponent<TargetEntity>(index, entity);
 
             EntityCommandBuffer.AddComponent<NeedGoal>(index, entity);
 
             // do we need to un-parent plant to the farmer?
-
-            EntityCommandBuffer.DestroyEntity(0, target.Value); // is target the store or a plant?
-
+            // EntityCommandBuffer.DestroyEntity(index, target.Value); // is target the store or a plant?
         }
     }
 
