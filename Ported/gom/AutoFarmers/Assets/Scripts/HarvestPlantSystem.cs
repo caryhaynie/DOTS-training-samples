@@ -32,6 +32,7 @@ public class HarvestPlantSystem : JobComponentSystem
             EntityCommandBuffer.AddComponent<NeedPath>(index, entity);
             EntityCommandBuffer.AddComponent<HoldingPlant>(index, entity);
             EntityCommandBuffer.RemoveComponent<HarvestPlantIntention>(index, entity);
+            EntityCommandBuffer.RemoveComponent<TargetEntity>(index, entity);
 
             // Parent plant to the farmer
             var plantEntity = target.Value;

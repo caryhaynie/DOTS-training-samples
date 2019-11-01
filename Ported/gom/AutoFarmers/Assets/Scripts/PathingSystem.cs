@@ -43,30 +43,6 @@ public class PathingSystem : JobComponentSystem
         }
     }
 
-    [BurstCompile]
-    struct CreateLandDataJob : IJobForEachWithEntity<Translation, LandState>
-    {
-        public int Width;
-
-        [NativeDisableContainerSafetyRestriction]
-        public NativeArray<LandStateType> Land;
-
-        [NativeDisableContainerSafetyRestriction]
-        public NativeArray<Entity> LandEntities;
-
-        public void Execute(
-            Entity entity,
-            int index,
-            [ReadOnly] ref Translation position,
-            [ReadOnly] ref LandState landState)
-        {
-            var tile = new int2(math.floor(position.Value.xz));
-            var tileIndex = tile.y * Width + tile.x;
-            Land[tileIndex] = landState.Value;
-            LandEntities[tileIndex] = entity;
-        }
-    }
-
     struct PQueue
     {
         int m_Capacity;
@@ -261,14 +237,6 @@ public class PathingSystem : JobComponentSystem
         }
     }
 
-    struct DeallocateTempMapDataJob : IJob
-    {
-        [DeallocateOnJobCompletion]
-        public NativeArray<int> Plants;
-
-        public void Execute() { }
-    }
-
     [BurstCompile]
     [ExcludeComponent(typeof(PathElement))]
     [RequireComponentTag(typeof(TillGroundIntention), typeof(NeedPath))]
@@ -324,7 +292,7 @@ public class PathingSystem : JobComponentSystem
                 tileIndex = GetTileIndex(tile.x, tile.y);
 
                 var landEntity = LandEntities[tileIndex];
-                if (landEntity != Entity.Null && LandStates[landEntity].Value == LandStateType.Untilled)
+                if (landEntity != Entity.Null && LandStates.HasComponent(landEntity) && LandStates[landEntity].Value == LandStateType.Untilled)
                 {
                     EntityCommandBuffer.AddComponent(index, entity, new TargetEntity { Value = landEntity });
                     hasPath = true;
@@ -411,6 +379,8 @@ public class PathingSystem : JobComponentSystem
 
                 var landEntity = LandEntities[tileIndex];
                 if (landEntity != Entity.Null && LandStates[landEntity].Value == LandStateType.Tilled)
+
+                if (landEntity != Entity.Null && LandStates.HasComponent(landEntity) && LandStates[landEntity].Value == LandStateType.Tilled)
                 {
                     EntityCommandBuffer.AddComponent(index, entity, new TargetEntity { Value = landEntity });
                     hasPath = true;
@@ -523,6 +493,88 @@ public class PathingSystem : JobComponentSystem
         }
     }
 
+    [ExcludeComponent(typeof(PathElement))]
+    [RequireComponentTag(typeof(HoldingPlant), typeof(SellPlantIntention), typeof(NeedPath))]
+    struct PathToStoreSellPlantJob : IJobForEachWithEntity<Translation>
+    {
+        public int Width;
+        public int Height;
+        public int Range;
+
+        [ReadOnly]
+        public NativeArray<Entity> Rocks;
+
+        [ReadOnly]
+        public NativeArray<Entity> StoreEntities;
+
+        public EntityCommandBuffer.Concurrent EntityCommandBuffer;
+
+        int GetTileIndex(int tileX, int tileY) => tileY * Width + tileX;
+
+        void Consider(
+            int2 currentTile, int2 dir, int steps,
+            ref PQueue queue, NativeArray<int> distances, NativeArray<int2> prev)
+        {
+            int2 neighborTile = currentTile + dir;
+            int neighborIndex = GetTileIndex(neighborTile.x, neighborTile.y);
+
+            if (distances[neighborIndex] > 0 || Rocks[neighborIndex] != Entity.Null) return;
+
+            if (-distances[neighborIndex] > steps)
+            {
+                distances[neighborIndex] = -steps;
+                prev[neighborIndex] = currentTile;
+                queue.Enqueue(neighborTile, steps);
+            }
+        }
+
+        public unsafe void Execute(
+            Entity entity,
+            int index,
+            [ReadOnly] ref Translation position)
+        {
+            EntityCommandBuffer.RemoveComponent<NeedPath>(index, entity);
+            Utils.Init(Width, Height, position.Value, out NativeArray<int> distances, out NativeArray<int2> prev, out PQueue queue, out int steps);
+            int tileIndex = 0;
+            bool hasPath = false;
+
+            while (queue.Length > 0 && steps < Range)
+            {
+                var tile = queue.Dequeue();
+                tileIndex = GetTileIndex(tile.x, tile.y);
+
+                var storeEntity = StoreEntities[tileIndex];
+                if (storeEntity != Entity.Null)
+                {
+                    EntityCommandBuffer.AddComponent(index, entity, new TargetEntity { Value = storeEntity });
+                    hasPath = true;
+                    break;
+                }
+
+                steps = Utils.MarkVisitedAndGetNextDistance(distances, tileIndex);
+
+                if (tile.x + 1 < Width - 1) Consider(tile, new int2(1, 0), steps, ref queue, distances, prev);
+                if (tile.x - 1 > 0) Consider(tile, new int2(-1, 0), steps, ref queue, distances, prev);
+                if (tile.y + 1 < Height - 1) Consider(tile, new int2(0, 1), steps, ref queue, distances, prev);
+                if (tile.y - 1 > 0) Consider(tile, new int2(0, -1), steps, ref queue, distances, prev);
+            }
+
+            if (hasPath)
+            {
+                Utils.AddPathToEntity(EntityCommandBuffer, index, entity, tileIndex, Width, prev);
+            }
+            else
+            {
+                EntityCommandBuffer.RemoveComponent<SellPlantIntention>(index, entity);
+                EntityCommandBuffer.AddComponent<NeedGoal>(index, entity);
+            }
+
+            distances.Dispose();
+            queue.Dispose();
+            prev.Dispose();
+        }
+    }
+
     [ExcludeComponent(typeof(PathElement), typeof(HoldingPlant))]
     [RequireComponentTag(typeof(HarvestPlantIntention), typeof(NeedPath))]
     struct PathToPlantJob : IJobForEachWithEntity<Translation>
@@ -578,7 +630,7 @@ public class PathingSystem : JobComponentSystem
                 tileIndex = GetTileIndex(tile.x, tile.y);
 
                 int* ptr = (int*)PlantCounts.GetUnsafePtr() + tileIndex;
-                if (Interlocked.Decrement(ref *ptr) == 0)
+                if (PlantEntities[tileIndex] != Entity.Null && Interlocked.Decrement(ref *ptr) == 0)
                 {
                     EntityCommandBuffer.AddComponent(index, entity, new TargetEntity { Value = PlantEntities[tileIndex] });
                     hasPath = true;
@@ -674,6 +726,18 @@ public class PathingSystem : JobComponentSystem
         m_EntityCommandBufferSystem.AddJobHandleForProducer(pathToStoreHandle);
         m_RockMapSystem.AddJobHandleForProducer(pathToStoreHandle);
 
+        var pathToStoreSellPlantHandle = new PathToStoreSellPlantJob
+        {
+            Width = mapData.Width,
+            Height = mapData.Height,
+            Range = 25,
+            Rocks = m_RockMapSystem.RockMap,
+            StoreEntities = storeEntities,
+            EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
+        }.Schedule(this, JobHandle.CombineDependencies(inputDeps, m_RockMapSystem.Handle));
+        m_EntityCommandBufferSystem.AddJobHandleForProducer(pathToStoreSellPlantHandle);
+        m_RockMapSystem.AddJobHandleForProducer(pathToStoreSellPlantHandle);
+
         var pathToPlantHandle = new PathToPlantJob
         {
             Width = mapData.Width,
@@ -687,25 +751,15 @@ public class PathingSystem : JobComponentSystem
         m_EntityCommandBufferSystem.AddJobHandleForProducer(pathToStoreHandle);
         m_RockMapSystem.AddJobHandleForProducer(pathToStoreHandle);
 
-        var combinedPathingHandles = JobHandle.CombineDependencies(
-            pathToRockHandle,
-            pathToUntilledHandle,
-            pathToStoreHandle);
-
-        combinedPathingHandles = JobHandle.CombineDependencies(
-            combinedPathingHandles,
-            pathToTillableHandle,
-            pathToPlantHandle);
-
-        // Cleanup
-        // var deallocateJob = new DeallocateTempMapDataJob
-        // {
-        //     Plants = plantCounts,
-        // // }.Schedule(JobHandle.CombineDependencies(combinedCreationHandles, combinedPathingHandles));
-        // }.Schedule(JobHandle.CombineDependencies(combinedCreationHandles, pathToRockHandle));
-
-        // return combinedPathingHandles;
-        // return pathToRockHandle;
-        return combinedPathingHandles;
+        using (var pathHandles = new NativeList<JobHandle>(Allocator.Temp))
+        {
+            pathHandles.Add(pathToRockHandle);
+            pathHandles.Add(pathToUntilledHandle);
+            pathHandles.Add(pathToStoreHandle);
+            pathHandles.Add(pathToTillableHandle);
+            pathHandles.Add(pathToPlantHandle);
+            pathHandles.Add(pathToStoreSellPlantHandle);
+            return JobHandle.CombineDependencies(pathHandles.AsArray());
+        }
     }
 }
