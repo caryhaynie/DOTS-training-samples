@@ -158,7 +158,7 @@ public class PathingSystem : JobComponentSystem
         }
     }
 
-    // [BurstCompile]
+    [BurstCompile]
     [ExcludeComponent(typeof(PathElement))]
     [RequireComponentTag(typeof(SmashRockIntention), typeof(NeedPath))]
     struct PathToRockJob : IJobForEachWithEntity<Translation>
@@ -323,7 +323,7 @@ public class PathingSystem : JobComponentSystem
         }
     }
 
-    // [BurstCompile]
+    [BurstCompile]
     [ExcludeComponent(typeof(PathElement))]
     [RequireComponentTag(typeof(PlantSeedIntention), typeof(HasSeeds), typeof(NeedPath))]
     struct PathToTilledJob : IJobForEachWithEntity<Translation>
@@ -411,6 +411,7 @@ public class PathingSystem : JobComponentSystem
         }
     }
 
+    [BurstCompile]
     [ExcludeComponent(typeof(PathElement), typeof(HasSeeds))]
     [RequireComponentTag(typeof(PlantSeedIntention), typeof(NeedPath))]
     struct PathToStoreJob : IJobForEachWithEntity<Translation>
@@ -493,6 +494,7 @@ public class PathingSystem : JobComponentSystem
         }
     }
 
+    [BurstCompile]
     [ExcludeComponent(typeof(PathElement))]
     [RequireComponentTag(typeof(HoldingPlant), typeof(SellPlantIntention), typeof(NeedPath))]
     struct PathToStoreSellPlantJob : IJobForEachWithEntity<Translation>
@@ -575,6 +577,7 @@ public class PathingSystem : JobComponentSystem
         }
     }
 
+    [BurstCompile]
     [ExcludeComponent(typeof(PathElement), typeof(HoldingPlant))]
     [RequireComponentTag(typeof(HarvestPlantIntention), typeof(NeedPath))]
     struct PathToPlantJob : IJobForEachWithEntity<Translation>
