@@ -61,8 +61,6 @@ public class PickIntentionSystem : JobComponentSystem
 
             EntityCommandBuffer.AddComponent<NeedPath>(index, entity);
             EntityCommandBuffer.RemoveComponent<NeedGoal>(index, entity);
-
-
         }
     }
 
