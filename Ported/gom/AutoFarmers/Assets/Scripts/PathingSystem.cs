@@ -358,7 +358,7 @@ public class PathingSystem : JobComponentSystem
     // [BurstCompile]
     [ExcludeComponent(typeof(PathElement))]
     [RequireComponentTag(typeof(PlantSeedIntention), typeof(HasSeeds), typeof(NeedPath))]
-    struct PathToTillableJob : IJobForEachWithEntity<Translation>
+    struct PathToTilledJob : IJobForEachWithEntity<Translation>
     {
         public int Width;
         public int Height;
@@ -603,7 +603,7 @@ public class PathingSystem : JobComponentSystem
         m_EntityCommandBufferSystem.AddJobHandleForProducer(pathToUntilledHandle);
         m_RockMapSystem.AddJobHandleForProducer(pathToUntilledHandle);
 
-        var pathToTillableHandle = new PathToTillableJob
+        var pathToTillableHandle = new PathToTilledJob
         {
             Width = mapData.Width,
             Height = mapData.Height,
