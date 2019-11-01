@@ -43,7 +43,7 @@ public class RockSmashSystem : JobComponentSystem
 
         public ComponentDataFromEntity<RockHealth> RockHealths;
         public ComponentDataFromEntity<Translation> RockTranslations;
-        public EntityCommandBuffer.Concurrent EntityCommandBuffer;
+        public EntityCommandBuffer EntityCommandBuffer;
 
         public void Execute()
         {
@@ -61,7 +61,7 @@ public class RockSmashSystem : JobComponentSystem
 
                     if (health.CurrentHealth <= 0)
                     {
-                        EntityCommandBuffer.DestroyEntity(0, entity);
+                        EntityCommandBuffer.DestroyEntity(entity);
                     }
                 }
             }
@@ -79,7 +79,7 @@ public class RockSmashSystem : JobComponentSystem
             None = new ComponentType[] { typeof(PathElement) },
             All = new ComponentType[] { typeof(SmashRockIntention), typeof(TargetEntity) }
         });
-        
+
         NativeArray<Entity> EntityArray = new NativeArray<Entity>(SmashesQuery.CalculateEntityCount(), Allocator.TempJob);
 
         var BuildArrayJob = new BuildSmashArray
@@ -91,7 +91,7 @@ public class RockSmashSystem : JobComponentSystem
 
         var HitRockJob = new DecrementRockHealth
         {
-            EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
+            EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer(),
             RockHealths = GetComponentDataFromEntity<RockHealth>(),
             RockTranslations = GetComponentDataFromEntity<Translation>(),
             AttackedRocks = EntityArray
