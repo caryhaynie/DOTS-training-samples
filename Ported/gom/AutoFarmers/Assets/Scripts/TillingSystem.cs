@@ -23,6 +23,7 @@ public class TillingSystem : JobComponentSystem
             ECB.SetComponent<LandState>(jobIndex, landEntity, new LandState { Value = LandStateType.Tilled });
             ECB.RemoveComponent<TillGroundIntention>(jobIndex, farmerEntity);
             ECB.AddComponent<NeedGoal>(jobIndex, farmerEntity);
+            ECB.RemoveComponent<TargetEntity>(jobIndex, farmerEntity);
         }
     }
 
