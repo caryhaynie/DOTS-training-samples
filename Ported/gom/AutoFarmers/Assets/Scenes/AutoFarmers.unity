@@ -152,7 +152,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de53209fb7a974bd7a7ba9b2a2bf007c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapSize: {x: 64, y: 64}
+  mapSize: {x: 128, y: 128}
   farmPrefab: {fileID: 6773664390219617213, guid: f2ec1a619d24b4b0f9e8050afc622d51,
     type: 3}
   farmerPrefab: {fileID: 3399155043664804294, guid: d3e7eeba0c2604c00b3411c1552b3494,
@@ -165,8 +165,8 @@ MonoBehaviour:
     type: 3}
   tillPrefab: {fileID: 1842367335424873371, guid: 46176cf3d8f254d7098d8007ff5a2153,
     type: 3}
-  rockSpawnAttempts: 20
-  storeCount: 5
+  rockSpawnAttempts: 200
+  storeCount: 20
 --- !u!114 &16322121
 MonoBehaviour:
   m_ObjectHideFlags: 0
