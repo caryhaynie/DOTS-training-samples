@@ -1,3 +1,4 @@
+using System.Threading;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -21,17 +22,24 @@ public class PathingSystem : JobComponentSystem
 
     [BurstCompile]
     [RequireComponentTag(typeof(HarvestablePlant))]
-    struct CreatePlantDataJob : IJobForEach<Translation>
+    struct CreatePlantDataJob : IJobForEachWithEntity<Translation>
     {
         public int Width;
 
-        public NativeArray<int> PlantCounts;
+        [NativeDisableParallelForRestriction]
+        [WriteOnly] public NativeArray<int> PlantCounts;
 
-        public void Execute([ReadOnly] ref Translation position)
+        [NativeDisableParallelForRestriction]
+        [WriteOnly] public NativeArray<Entity> PlantEntities;
+
+        public void Execute(
+            Entity entity, int index,
+            [ReadOnly] ref Translation position)
         {
             var tile = new int2(math.floor(position.Value.xz));
             var tileIndex = tile.y * Width + tile.x;
             PlantCounts[tileIndex] = 1;
+            PlantEntities[tileIndex] = entity;
         }
     }
 
