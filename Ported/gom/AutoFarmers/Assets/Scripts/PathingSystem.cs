@@ -630,7 +630,7 @@ public class PathingSystem : JobComponentSystem
                 tileIndex = GetTileIndex(tile.x, tile.y);
 
                 int* ptr = (int*)PlantCounts.GetUnsafePtr() + tileIndex;
-                if (Interlocked.Decrement(ref *ptr) == 0)
+                if (PlantEntities[tileIndex] != Entity.Null && Interlocked.Decrement(ref *ptr) == 0)
                 {
                     EntityCommandBuffer.AddComponent(index, entity, new TargetEntity { Value = PlantEntities[tileIndex] });
                     hasPath = true;
