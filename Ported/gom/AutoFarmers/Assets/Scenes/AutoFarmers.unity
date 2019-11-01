@@ -157,7 +157,7 @@ MonoBehaviour:
     type: 3}
   farmerPrefab: {fileID: 3399155043664804294, guid: d3e7eeba0c2604c00b3411c1552b3494,
     type: 3}
-  plantPrefab: {fileID: 7614736358986258563, guid: 7d2385c3217c248b2bb7802ba6804abe,
+  plantPrefab: {fileID: 5961099658802834478, guid: 2b1cb5c65150b4138bc87d074a4d6d65,
     type: 3}
   rockPrefab: {fileID: 7722286474559156674, guid: a52c12e352de349519ef45adb669f497,
     type: 3}
