@@ -37,7 +37,7 @@ public class HarvestPlantSystem : JobComponentSystem
             var plantEntity = target.Value;
             EntityCommandBuffer.AddComponent(index, plantEntity, new Parent { Value = entity });
             EntityCommandBuffer.AddComponent<LocalToParent>(index, plantEntity);
-            EntityCommandBuffer.SetComponent(index, plantEntity, new Translation { Value = new float3(0) });
+            EntityCommandBuffer.SetComponent(index, plantEntity, new Translation { Value = new float3(0, 1.5f, 0) });
         }
     }
 
