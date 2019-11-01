@@ -730,7 +730,7 @@ public class PathingSystem : JobComponentSystem
         {
             Width = mapData.Width,
             Height = mapData.Height,
-            Range = 25,
+            Range = mapData.Width * mapData.Height,
             Rocks = m_RockMapSystem.RockMap,
             StoreEntities = storeEntities,
             EntityCommandBuffer = m_EntityCommandBufferSystem.CreateCommandBuffer().ToConcurrent()
