@@ -292,7 +292,7 @@ public class PathingSystem : JobComponentSystem
                 tileIndex = GetTileIndex(tile.x, tile.y);
 
                 var landEntity = LandEntities[tileIndex];
-                if (landEntity != Entity.Null && LandStates[landEntity].Value == LandStateType.Untilled)
+                if (landEntity != Entity.Null && LandStates.HasComponent(landEntity) && LandStates[landEntity].Value == LandStateType.Untilled)
                 {
                     EntityCommandBuffer.AddComponent(index, entity, new TargetEntity { Value = landEntity });
                     hasPath = true;
@@ -379,6 +379,8 @@ public class PathingSystem : JobComponentSystem
 
                 var landEntity = LandEntities[tileIndex];
                 if (landEntity != Entity.Null && LandStates[landEntity].Value == LandStateType.Tilled)
+
+                if (landEntity != Entity.Null && LandStates.HasComponent(landEntity) && LandStates[landEntity].Value == LandStateType.Tilled)
                 {
                     EntityCommandBuffer.AddComponent(index, entity, new TargetEntity { Value = landEntity });
                     hasPath = true;
