@@ -18,7 +18,7 @@ public class SellPlantSystem : JobComponentSystem
 
     [BurstCompile]
     [ExcludeComponent(typeof(PathIndex))]
-    [RequireComponentTag(typeof(SellPlantIntention))]
+    [RequireComponentTag(typeof(SellPlantIntention), typeof(HoldingPlant))]
     struct SellPlantJob : IJobForEachWithEntity<TargetEntity>
     {
         public EntityCommandBuffer.Concurrent EntityCommandBuffer;
@@ -28,6 +28,7 @@ public class SellPlantSystem : JobComponentSystem
             ref TargetEntity target)
         {
             EntityCommandBuffer.RemoveComponent<SellPlantIntention>(index, entity);
+            EntityCommandBuffer.RemoveComponent<HoldingPlant>(index, entity);
             EntityCommandBuffer.RemoveComponent<TargetEntity>(index, entity);
             EntityCommandBuffer.AddComponent<NeedGoal>(index, entity);
 
